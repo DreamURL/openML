@@ -3,8 +3,10 @@ import { useData } from '@/context/DataContext'
 import { useNavigate } from 'react-router-dom'
 import { ColumnSelector } from '@/components/data/ColumnSelector'
 import { ScatterChart } from '@/components/charts/ScatterChart'
-import { Grid3x3, Download } from 'lucide-react'
+import { Grid3x3, Download, ImageDown } from 'lucide-react'
 import { useTheme } from '@/context/ThemeContext'
+import { useLang } from '@/context/LangContext'
+import { t } from '@/i18n/strings'
 
 type Method = 'pearson' | 'spearman'
 
@@ -58,6 +60,7 @@ export function CorrelationAnalysis() {
   const { rawData, numericalColumns } = useData()
   const navigate = useNavigate()
   const { theme } = useTheme()
+  const { lang } = useLang()
 
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([])
   const [method, setMethod] = useState<Method>('pearson')
@@ -110,8 +113,8 @@ export function CorrelationAnalysis() {
             f1: result.features[i],
             f2: result.features[j],
             corr: c,
-            strength: abs >= 0.7 ? 'Very Strong' : abs >= 0.5 ? 'Strong' : abs >= 0.3 ? 'Moderate' : 'Weak',
-            dir: c > 0 ? 'Positive' : 'Negative',
+            strength: abs >= 0.7 ? 'veryStrong' : abs >= 0.5 ? 'strong' : abs >= 0.3 ? 'moderate' : 'weak',
+            dir: c > 0 ? 'positive' : 'negative',
           })
         }
       }
@@ -134,17 +137,134 @@ export function CorrelationAnalysis() {
     URL.revokeObjectURL(url)
   }
 
+  const downloadHeatmapImage = () => {
+    if (!result) return
+    const { matrix, features } = result
+    const cellSize = 56
+    const padding = 16
+    const labelFont = '11px Inter, sans-serif'
+    const valueFont = '12px JetBrains Mono, monospace'
+
+    // Measure label widths
+    const measureCanvas = document.createElement('canvas')
+    const mCtx = measureCanvas.getContext('2d')!
+    mCtx.font = labelFont
+    const maxLabelWidth = Math.max(...features.map((f) => mCtx.measureText(f).width)) + 12
+    const labelWidth = Math.max(80, maxLabelWidth)
+
+    // Color bar dimensions
+    const barWidth = 20
+    const barGap = 16
+    const barLabelWidth = 36
+
+    const bottomLabelHeight = 24
+    const gridWidth = features.length * cellSize
+    const gridHeight = features.length * cellSize
+    const width = padding + labelWidth + gridWidth + barGap + barWidth + barLabelWidth + padding
+    const height = padding + gridHeight + bottomLabelHeight + padding
+
+    const canvas = document.createElement('canvas')
+    canvas.width = width * 2
+    canvas.height = height * 2
+    const ctx = canvas.getContext('2d')!
+    ctx.scale(2, 2)
+
+    // Background
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, width, height)
+
+    const gridLeft = padding + labelWidth
+    const gridTop = padding
+
+    // Row labels (left) + cells
+    ctx.font = labelFont
+    features.forEach((f, i) => {
+      // Row label
+      ctx.fillStyle = '#64748b'
+      ctx.textAlign = 'right'
+      ctx.font = labelFont
+      ctx.fillText(f, gridLeft - 8, gridTop + i * cellSize + cellSize / 2 + 4)
+
+      // Cells
+      matrix[i].forEach((val, j) => {
+        const x = gridLeft + j * cellSize
+        const y = gridTop + i * cellSize
+
+        ctx.fillStyle = getColor(val)
+        ctx.fillRect(x, y, cellSize, cellSize)
+
+        ctx.strokeStyle = 'rgba(200,200,200,0.3)'
+        ctx.strokeRect(x, y, cellSize, cellSize)
+
+        ctx.fillStyle = Math.abs(val) > 0.5 ? '#ffffff' : '#334155'
+        ctx.font = valueFont
+        ctx.textAlign = 'center'
+        ctx.fillText(val.toFixed(2), x + cellSize / 2, y + cellSize / 2 + 4)
+      })
+    })
+
+    // Bottom column labels (horizontal)
+    ctx.font = labelFont
+    ctx.fillStyle = '#64748b'
+    ctx.textAlign = 'center'
+    features.forEach((f, j) => {
+      const x = gridLeft + j * cellSize + cellSize / 2
+      const y = gridTop + gridHeight + 14
+      const maxChars = Math.max(4, Math.floor(cellSize / 7))
+      ctx.fillText(f.length > maxChars ? f.slice(0, maxChars - 1) + '…' : f, x, y)
+    })
+
+    // Color bar (right side) — gradient from +1 (blue top) to -1 (red bottom)
+    const barLeft = gridLeft + gridWidth + barGap
+    const barTop = gridTop
+    const barHeight = gridHeight
+
+    for (let py = 0; py < barHeight; py++) {
+      const ratio = py / barHeight  // 0 = top (+1), 1 = bottom (-1)
+      const value = 1 - ratio * 2   // +1 → -1
+      ctx.fillStyle = getColor(value)
+      ctx.fillRect(barLeft, barTop + py, barWidth, 1)
+    }
+    ctx.strokeStyle = 'rgba(200,200,200,0.5)'
+    ctx.strokeRect(barLeft, barTop, barWidth, barHeight)
+
+    // Color bar tick labels
+    ctx.font = '10px Inter, sans-serif'
+    ctx.fillStyle = '#64748b'
+    ctx.textAlign = 'left'
+    const ticks = [1, 0.5, 0, -0.5, -1]
+    ticks.forEach((v) => {
+      const ty = barTop + ((1 - v) / 2) * barHeight
+      ctx.fillText(v.toFixed(1), barLeft + barWidth + 4, ty + 3)
+      ctx.beginPath()
+      ctx.moveTo(barLeft + barWidth, ty)
+      ctx.lineTo(barLeft + barWidth + 2, ty)
+      ctx.strokeStyle = '#94a3b8'
+      ctx.stroke()
+    })
+
+    canvas.toBlob((blob) => {
+      if (!blob) return
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `heatmap_${result.method}_${Date.now()}.png`
+      a.click()
+      URL.revokeObjectURL(url)
+    }, 'image/png')
+  }
+
   if (rawData.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] text-center">
         <Grid3x3 size={48} className="text-text-muted mb-4" />
-        <h2 className="text-xl font-semibold mb-2">No Dataset Loaded</h2>
-        <p className="text-text-muted mb-4">Upload a dataset first to use Correlation Analysis.</p>
+        <h2 className="text-xl font-semibold mb-2">{t('noDataset', lang)}</h2>
+        <p className="text-text-muted mb-4">{t('noDatasetDesc', lang)}</p>
         <button
           onClick={() => navigate('/')}
           className="bg-accent hover:bg-accent-light text-white font-medium px-4 py-2 rounded-lg transition-all"
         >
-          Go to Home
+          {t('goToHome', lang)}
         </button>
       </div>
     )
@@ -154,23 +274,23 @@ export function CorrelationAnalysis() {
     <div className="max-w-6xl mx-auto space-y-6">
       <h2 className="text-xl font-bold">
         <Grid3x3 size={20} className="inline mr-2 text-accent" />
-        Correlation Analysis
+        {t('correlationName', lang)}
       </h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Config */}
         <div className="space-y-5 bg-surface border border-border rounded-xl p-5">
-          <h3 className="font-semibold text-sm">Configuration</h3>
+          <h3 className="font-semibold text-sm">{t('configuration', lang)}</h3>
 
           <ColumnSelector
             columns={numericalColumns}
             selected={selectedFeatures}
             onChange={setSelectedFeatures}
-            label="Variables"
+            label={t('variables', lang)}
           />
 
           <div>
-            <label className="text-sm font-medium text-text-muted">Method</label>
+            <label className="text-sm font-medium text-text-muted">{t('method', lang)}</label>
             <select
               value={method}
               onChange={(e) => setMethod(e.target.value as Method)}
@@ -182,7 +302,7 @@ export function CorrelationAnalysis() {
           </div>
 
           <div>
-            <label className="text-sm font-medium text-text-muted">Min Correlation Threshold</label>
+            <label className="text-sm font-medium text-text-muted">{t('minCorrelationThreshold', lang)}</label>
             <select
               value={minCorrelation}
               onChange={(e) => setMinCorrelation(Number(e.target.value))}
@@ -201,7 +321,7 @@ export function CorrelationAnalysis() {
             disabled={selectedFeatures.length < 2}
             className="w-full bg-accent hover:bg-accent-light disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium py-2 rounded-lg transition-all text-sm"
           >
-            Run Analysis
+            {t('runAnalysis', lang)}
           </button>
 
           {result && (
@@ -210,7 +330,7 @@ export function CorrelationAnalysis() {
               className="w-full flex items-center justify-center gap-2 border border-border text-text-muted hover:text-accent hover:border-accent py-2 rounded-lg transition-all text-sm"
             >
               <Download size={14} />
-              Download CSV
+              {t('downloadCSV', lang)}
             </button>
           )}
         </div>
@@ -221,15 +341,15 @@ export function CorrelationAnalysis() {
             <>
               <div className="grid grid-cols-3 gap-3">
                 <div className="bg-surface border border-border rounded-lg p-3">
-                  <p className="text-xs text-text-muted">Method</p>
+                  <p className="text-xs text-text-muted">{t('method', lang)}</p>
                   <p className="text-sm font-semibold capitalize">{result.method}</p>
                 </div>
                 <div className="bg-surface border border-border rounded-lg p-3">
-                  <p className="text-xs text-text-muted">Variables</p>
+                  <p className="text-xs text-text-muted">{t('variables', lang)}</p>
                   <p className="text-sm font-semibold">{result.features.length}</p>
                 </div>
                 <div className="bg-surface border border-border rounded-lg p-3">
-                  <p className="text-xs text-text-muted">Valid Rows</p>
+                  <p className="text-xs text-text-muted">{t('validRows', lang)}</p>
                   <p className="text-sm font-semibold">{result.dataCount.toLocaleString()}</p>
                 </div>
               </div>
@@ -241,7 +361,7 @@ export function CorrelationAnalysis() {
                     className={`flex-1 py-1.5 text-sm rounded-md transition-all ${
                       activeTab === tab ? 'bg-accent text-white' : 'text-text-muted hover:text-accent'
                     }`}>
-                    {tab === 'scatter' ? 'Scatter Matrix' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                    {tab === 'heatmap' ? t('heatmap', lang) : tab === 'scatter' ? t('scatterMatrix', lang) : t('summary', lang)}
                   </button>
                 ))}
               </div>
@@ -252,16 +372,24 @@ export function CorrelationAnalysis() {
                   <div className="flex items-center gap-4 text-xs text-text-muted mb-4">
                     <div className="flex items-center gap-1">
                       <div className="w-3 h-3 rounded" style={{ backgroundColor: 'rgba(108, 99, 255, 0.85)' }} />
-                      Strong positive
+                      {t('strongPositive', lang)}
                     </div>
                     <div className="flex items-center gap-1">
                       <div className="w-3 h-3 rounded" style={{ backgroundColor: 'rgba(239, 68, 68, 0.85)' }} />
-                      Strong negative
+                      {t('strongNegative', lang)}
                     </div>
                     <div className="flex items-center gap-1">
                       <div className="w-3 h-3 rounded" style={{ backgroundColor: 'rgba(148, 163, 184, 0.15)' }} />
-                      Weak
+                      {t('weak', lang)}
                     </div>
+                    <button
+                      onClick={downloadHeatmapImage}
+                      className="ml-auto flex items-center gap-1 text-text-muted hover:text-accent transition-colors"
+                      title={t('downloadImage', lang)}
+                    >
+                      <ImageDown size={14} />
+                      <span className="hidden sm:inline">{t('downloadImage', lang)}</span>
+                    </button>
                   </div>
 
                   <table className="w-full border-collapse">
@@ -308,11 +436,11 @@ export function CorrelationAnalysis() {
                   <div className="flex items-center gap-4 text-xs text-text-muted">
                     <div className="flex items-center gap-1">
                       <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: 'rgba(108, 99, 255, 0.7)' }} />
-                      Strong correlation (|r| &ge; 0.5)
+                      {t('strongCorrelation', lang)}
                     </div>
                     <div className="flex items-center gap-1">
                       <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: theme === 'light' ? 'rgba(30, 41, 59, 0.5)' : 'rgba(148, 163, 184, 0.4)' }} />
-                      Weak correlation (|r| &lt; 0.5)
+                      {t('weakCorrelation', lang)}
                     </div>
                   </div>
                   {result.features.map((fy, i) =>
@@ -346,7 +474,7 @@ export function CorrelationAnalysis() {
               {activeTab === 'summary' && (
                 <div className="bg-surface border border-border rounded-xl p-4 space-y-2">
                   <h4 className="text-sm font-medium text-text-muted mb-3">
-                    Correlations above {minCorrelation} threshold
+                    {t('correlationsAbove', lang)} {minCorrelation} {t('threshold', lang)}
                   </h4>
                   {strongCorrelations.length > 0 ? (
                     strongCorrelations.map((item, i) => (
@@ -359,7 +487,7 @@ export function CorrelationAnalysis() {
                             {item.f1} ↔ {item.f2}
                           </p>
                           <p className="text-xs text-text-muted">
-                            {item.dir} · {item.strength}
+                            {t(item.dir as 'positive' | 'negative', lang)} · {t(item.strength as 'veryStrong' | 'strong' | 'moderate' | 'weak', lang)}
                           </p>
                         </div>
                         <span
@@ -375,7 +503,7 @@ export function CorrelationAnalysis() {
                     ))
                   ) : (
                     <div className="text-center py-8 text-text-muted text-sm">
-                      No correlations above threshold {minCorrelation}. Try lowering it.
+                      {t('noCorrelations', lang)} ({minCorrelation}). {t('tryLowering', lang)}
                     </div>
                   )}
                 </div>
@@ -386,7 +514,7 @@ export function CorrelationAnalysis() {
           {!result && (
             <div className="bg-surface border border-border rounded-xl p-12 text-center text-text-muted">
               <Grid3x3 size={40} className="mx-auto mb-3 opacity-30" />
-              <p>Select variables and click "Run Analysis" to compute correlations</p>
+              <p>{t('selectVarsPrompt', lang)}</p>
             </div>
           )}
         </div>

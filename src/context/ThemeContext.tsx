@@ -12,7 +12,7 @@ const ThemeContext = createContext<ThemeContextType>({ theme: 'dark', toggleThem
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
     const saved = localStorage.getItem('openml-theme')
-    return (saved === 'light' || saved === 'dark') ? saved : 'dark'
+    return (saved === 'light' || saved === 'dark') ? saved : 'light'
   })
 
   useEffect(() => {

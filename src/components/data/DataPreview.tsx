@@ -1,9 +1,12 @@
 import { useData } from '@/context/DataContext'
 import { Table, X } from 'lucide-react'
+import { useLang } from '@/context/LangContext'
+import { t } from '@/i18n/strings'
 
 export function DataPreview() {
   const { rawData, columns, numericalColumns, categoricalColumns, fileName, rowCount, clearData } =
     useData()
+  const { lang } = useLang()
 
   if (rawData.length === 0) return null
 
@@ -16,13 +19,13 @@ export function DataPreview() {
           <Table size={16} className="text-accent" />
           <span className="font-medium text-sm">{fileName}</span>
           <span className="text-xs text-text-muted">
-            {rowCount.toLocaleString()} rows · {columns.length} columns
+            {rowCount.toLocaleString()} {t('rows', lang)} · {columns.length} {t('columns', lang)}
           </span>
         </div>
         <button
           onClick={clearData}
           className="text-text-muted hover:text-danger transition-colors p-1"
-          title="Remove dataset"
+          title={t('removeDataset', lang)}
         >
           <X size={16} />
         </button>
@@ -30,10 +33,10 @@ export function DataPreview() {
 
       <div className="flex gap-2 px-5 py-2 border-b border-border">
         <span className="text-xs bg-accent/20 text-accent px-2 py-0.5 rounded">
-          {numericalColumns.length} numeric
+          {numericalColumns.length} {t('numeric', lang)}
         </span>
         <span className="text-xs bg-warning/20 text-warning px-2 py-0.5 rounded">
-          {categoricalColumns.length} categorical
+          {categoricalColumns.length} {t('categorical', lang)}
         </span>
       </div>
 
@@ -76,7 +79,7 @@ export function DataPreview() {
 
       {rawData.length > 10 && (
         <p className="px-5 py-2 text-xs text-text-muted">
-          Showing first 10 of {rowCount.toLocaleString()} rows
+          {t('showingFirst', lang)} {rowCount.toLocaleString()} {t('rows', lang)}
         </p>
       )}
     </div>

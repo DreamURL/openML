@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react'
+import { useLang } from '@/context/LangContext'
+import { t } from '@/i18n/strings'
 
 interface ColumnSelectorProps {
   columns: string[]
@@ -12,9 +14,11 @@ export function ColumnSelector({
   columns,
   selected,
   onChange,
-  label = 'Select columns',
+  label,
   multiple = true,
 }: ColumnSelectorProps) {
+  const { lang } = useLang()
+  const displayLabel = label ?? t('selectColumns', lang)
   const toggle = (col: string) => {
     if (multiple) {
       onChange(selected.includes(col) ? selected.filter((c) => c !== col) : [...selected, col])
@@ -29,14 +33,14 @@ export function ColumnSelector({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-text-muted">{label}</label>
+        <label className="text-sm font-medium text-text-muted">{displayLabel}</label>
         {multiple && (
           <div className="flex gap-2 text-xs">
             <button onClick={selectAll} className="text-accent hover:underline">
-              All
+              {t('all', lang)}
             </button>
             <button onClick={clearAll} className="text-text-muted hover:underline">
-              Clear
+              {t('clear', lang)}
             </button>
           </div>
         )}
@@ -57,7 +61,7 @@ export function ColumnSelector({
         ))}
       </div>
       {selected.length > 0 && (
-        <p className="text-xs text-text-muted">{selected.length} column(s) selected</p>
+        <p className="text-xs text-text-muted">{selected.length} {t('columnsSelected', lang)}</p>
       )}
     </div>
   )

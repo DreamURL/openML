@@ -8,6 +8,8 @@ import { ScatterChart, CHART_COLORS } from '@/components/charts/ScatterChart'
 import { BarChart } from '@/components/charts/BarChart'
 import { Layers, Download } from 'lucide-react'
 import * as XLSX from 'xlsx'
+import { useLang } from '@/context/LangContext'
+import { t } from '@/i18n/strings'
 
 interface PCAResult {
   projectedData: number[][]
@@ -25,6 +27,7 @@ const BASE = import.meta.env.BASE_URL
 export function PCA() {
   const { rawData, numericalColumns } = useData()
   const navigate = useNavigate()
+  const { lang } = useLang()
 
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([])
   const [numComponents, setNumComponents] = useState(2)
@@ -81,10 +84,10 @@ export function PCA() {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] text-center">
         <Layers size={48} className="text-text-muted mb-4" />
-        <h2 className="text-xl font-semibold mb-2">No Dataset Loaded</h2>
-        <p className="text-text-muted mb-4">Upload a dataset first to use PCA.</p>
+        <h2 className="text-xl font-semibold mb-2">{t('noDataset', lang)}</h2>
+        <p className="text-text-muted mb-4">{t('noDatasetDesc', lang)}</p>
         <button onClick={() => navigate('/')} className="bg-accent hover:bg-accent-light text-white font-medium px-4 py-2 rounded-lg transition-all">
-          Go to Home
+          {t('goToHome', lang)}
         </button>
       </div>
     )
@@ -94,24 +97,24 @@ export function PCA() {
     <div className="max-w-6xl mx-auto space-y-6">
       <h2 className="text-xl font-bold">
         <Layers size={20} className="inline mr-2 text-accent" />
-        PCA &amp; Anomaly Detection
+        {t('pcaAnomalyTitle', lang)}
       </h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Config */}
         <div className="space-y-5 bg-surface border border-border rounded-xl p-5">
-          <h3 className="font-semibold text-sm">Configuration</h3>
+          <h3 className="font-semibold text-sm">{t('configuration', lang)}</h3>
 
           <ColumnSelector
             columns={numericalColumns}
             selected={selectedFeatures}
             onChange={setSelectedFeatures}
-            label="Feature Columns"
+            label={t('featureColumns', lang)}
           />
 
           <div>
             <label className="text-sm font-medium text-text-muted">
-              Components: {numComponents}
+              {t('components', lang)}: {numComponents}
             </label>
             <input
               type="range"
@@ -125,7 +128,7 @@ export function PCA() {
 
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={normalize} onChange={(e) => setNormalize(e.target.checked)} className="accent-accent" />
-            Standardize data
+            {t('standardizeData', lang)}
           </label>
 
           <div className="flex gap-2">
@@ -134,17 +137,17 @@ export function PCA() {
               disabled={isRunning || selectedFeatures.length < 2}
               className="flex-1 bg-accent hover:bg-accent-light disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium py-2 rounded-lg transition-all text-sm"
             >
-              {isRunning ? 'Running...' : 'Run PCA'}
+              {isRunning ? t('running', lang) : t('runPCA', lang)}
             </button>
             {isRunning && (
               <button onClick={cancel} className="px-3 py-2 border border-danger text-danger rounded-lg text-sm hover:bg-danger/10">
-                Cancel
+                {t('cancel', lang)}
               </button>
             )}
           </div>
 
           {selectedFeatures.length < 2 && selectedFeatures.length > 0 && (
-            <p className="text-xs text-warning">Select at least 2 features</p>
+            <p className="text-xs text-warning">{t('selectAtLeast2', lang)}</p>
           )}
 
           <TrainingProgress progress={progress} message={progressMessage} isRunning={isRunning} />
@@ -157,7 +160,7 @@ export function PCA() {
             <>
               <div>
                 <label className="text-sm font-medium text-text-muted">
-                  Anomaly Threshold: {anomalyThreshold}th percentile
+                  {t('anomalyThreshold', lang)}: {anomalyThreshold}{t('anomalyPercentile', lang)}
                 </label>
                 <input
                   type="range"
@@ -190,7 +193,7 @@ export function PCA() {
                 }}
                 className="w-full flex items-center justify-center gap-2 border border-border text-text-muted hover:text-accent hover:border-accent py-2 rounded-lg transition-all text-sm"
               >
-                <Download size={14} /> Download PCA Results (Excel)
+                <Download size={14} /> {t('downloadPCAExcel', lang)}
               </button>
             </>
           )}
@@ -202,10 +205,10 @@ export function PCA() {
             <>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
-                  { label: 'Components', value: result.numComponents },
-                  { label: 'Total Var.', value: (result.explainedVariance.reduce((a, b) => a + b, 0) * 100).toFixed(1) + '%' },
-                  { label: 'Anomalies', value: anomalyData?.anomalyCount ?? 0 },
-                  { label: 'Backend', value: result.backend },
+                  { label: t('components', lang), value: result.numComponents },
+                  { label: t('totalVar', lang), value: (result.explainedVariance.reduce((a, b) => a + b, 0) * 100).toFixed(1) + '%' },
+                  { label: t('anomalies', lang), value: anomalyData?.anomalyCount ?? 0 },
+                  { label: t('backend', lang), value: result.backend },
                 ].map(({ label, value }) => (
                   <div key={label} className="bg-surface border border-border rounded-lg p-3">
                     <p className="text-xs text-text-muted">{label}</p>
@@ -224,7 +227,9 @@ export function PCA() {
                       activeTab === tab ? 'bg-accent text-white' : 'text-text-muted hover:text-accent'
                     }`}
                   >
-                    {tab}
+                    {tab === 'projection' && t('projection', lang)}
+                    {tab === 'variance' && t('varianceExplained', lang)}
+                    {tab === 'anomaly' && t('anomalyDetection', lang)}
                   </button>
                 ))}
               </div>
@@ -234,7 +239,7 @@ export function PCA() {
                   datasets={projectionDatasets}
                   xLabel="PC1"
                   yLabel="PC2"
-                  title="PCA Projection (PC1 vs PC2)"
+                  title={t('pcaProjectionTitle', lang)}
                 />
               )}
 
@@ -243,26 +248,26 @@ export function PCA() {
                   labels={result.explainedVariance.map((_, i) => `PC${i + 1}`)}
                   data={result.explainedVariance.map((v) => +(v * 100).toFixed(2))}
                   label="Variance %"
-                  title="Explained Variance by Component (Scree Plot)"
+                  title={t('explainedVarianceTitle', lang)}
                 />
               )}
 
               {activeTab === 'anomaly' && anomalyData && (
                 <div className="bg-surface border border-border rounded-xl p-4 space-y-3">
                   <h4 className="text-sm font-medium">
-                    Anomaly Detection (T-squared &gt; {anomalyData.threshold.toFixed(2)})
+                    {t('anomalyDetection', lang)} (T-squared &gt; {anomalyData.threshold.toFixed(2)})
                   </h4>
                   <p className="text-xs text-text-muted">
-                    {anomalyData.anomalyCount} anomalies detected out of {result.tSquared.length} data points
+                    {anomalyData.anomalyCount} {t('anomaliesDetectedMsg', lang)} {result.tSquared.length} data points
                     ({((anomalyData.anomalyCount / result.tSquared.length) * 100).toFixed(1)}%)
                   </p>
                   <div className="max-h-64 overflow-y-auto">
                     <table className="w-full text-xs">
                       <thead>
                         <tr className="border-b border-border">
-                          <th className="px-3 py-1.5 text-left text-text-muted">Index</th>
+                          <th className="px-3 py-1.5 text-left text-text-muted">{t('index', lang)}</th>
                           <th className="px-3 py-1.5 text-left text-text-muted">T-squared</th>
-                          <th className="px-3 py-1.5 text-left text-text-muted">Status</th>
+                          <th className="px-3 py-1.5 text-left text-text-muted">{t('status', lang)}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -274,7 +279,7 @@ export function PCA() {
                               <td className="px-3 py-1 font-mono">{a.index}</td>
                               <td className="px-3 py-1 font-mono">{a.tSquared.toFixed(4)}</td>
                               <td className="px-3 py-1">
-                                <span className="text-danger text-xs">Anomaly</span>
+                                <span className="text-danger text-xs">{t('anomalies', lang)}</span>
                               </td>
                             </tr>
                           ))}
@@ -289,7 +294,7 @@ export function PCA() {
           {!result && !isRunning && (
             <div className="bg-surface border border-border rounded-xl p-12 text-center text-text-muted">
               <Layers size={40} className="mx-auto mb-3 opacity-30" />
-              <p>Configure parameters and click "Run PCA" to start</p>
+              <p>{t('configurePCAPrompt', lang)}</p>
             </div>
           )}
         </div>

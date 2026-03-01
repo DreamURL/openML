@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom'
 import { ColumnSelector } from '@/components/data/ColumnSelector'
 import { BarChart } from '@/components/charts/BarChart'
 import { SlidersHorizontal, Download, RotateCcw } from 'lucide-react'
+import { useLang } from '@/context/LangContext'
+import { t } from '@/i18n/strings'
 import * as XLSX from 'xlsx'
 
 type MissingStrategy = 'drop' | 'mean' | 'median' | 'zero' | 'ffill'
@@ -14,6 +16,7 @@ type OutlierMethod = 'none' | 'iqr' | 'zscore'
 export function Preprocessing() {
   const { rawData, numericalColumns, columns, setDataset } = useData()
   const navigate = useNavigate()
+  const { lang } = useLang()
 
   const [selectedCols, setSelectedCols] = useState<string[]>([])
   const [missingStrategy, setMissingStrategy] = useState<MissingStrategy>('mean')
@@ -179,10 +182,10 @@ export function Preprocessing() {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] text-center">
         <SlidersHorizontal size={48} className="text-text-muted mb-4" />
-        <h2 className="text-xl font-semibold mb-2">No Dataset Loaded</h2>
-        <p className="text-text-muted mb-4">Upload a dataset first to preprocess.</p>
+        <h2 className="text-xl font-semibold mb-2">{t('noDataset', lang)}</h2>
+        <p className="text-text-muted mb-4">{t('noDatasetDesc', lang)}</p>
         <button onClick={() => navigate('/')} className="bg-accent hover:bg-accent-light text-white font-medium px-4 py-2 rounded-lg transition-all">
-          Go to Home
+          {t('goToHome', lang)}
         </button>
       </div>
     )
@@ -192,52 +195,50 @@ export function Preprocessing() {
     <div className="max-w-6xl mx-auto space-y-6">
       <h2 className="text-xl font-bold">
         <SlidersHorizontal size={20} className="inline mr-2 text-accent" />
-        Data Preprocessing
+        {t('dataPreprocessing', lang)}
       </h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Config */}
         <div className="space-y-4 bg-surface border border-border rounded-xl p-5">
-          <h3 className="font-semibold text-sm">Configuration</h3>
+          <h3 className="font-semibold text-sm">{t('configuration', lang)}</h3>
 
           <ColumnSelector
             columns={numericalColumns}
             selected={selectedCols}
             onChange={setSelectedCols}
-            label={<>Columns to Process<br /><span className="font-normal">(empty = all numeric)</span></>}
+            label={<>{t('columnsToProcess', lang)}<br /><span className="font-normal">{t('emptyAllNumeric', lang)}</span></>}
           />
 
           {/* Missing Values */}
           <div>
-            <label className="text-sm font-medium text-text-muted">Missing Values</label>
+            <label className="text-sm font-medium text-text-muted">{t('missingValues', lang)}</label>
             <select value={missingStrategy} onChange={(e) => setMissingStrategy(e.target.value as MissingStrategy)}
               className="w-full mt-1 bg-bg border border-border rounded-lg px-3 py-2 text-sm text-text">
-              <option value="mean">Fill with Mean</option>
-              <option value="median">Fill with Median</option>
-              <option value="zero">Fill with 0</option>
-              <option value="ffill">Forward Fill</option>
-              <option value="drop">Drop Rows</option>
+              <option value="mean">{t('fillMean', lang)}</option>
+              <option value="median">{t('fillMedian', lang)}</option>
+              <option value="zero">{t('fillZero', lang)}</option>
+              <option value="ffill">{t('forwardFill', lang)}</option>
+              <option value="drop">{t('dropRows', lang)}</option>
             </select>
           </div>
 
           {/* Outlier Removal */}
           <div>
-            <label className="text-sm font-medium text-text-muted">Outlier Removal</label>
+            <label className="text-sm font-medium text-text-muted">{t('outlierRemoval', lang)}</label>
             <select value={outlierMethod} onChange={(e) => setOutlierMethod(e.target.value as OutlierMethod)}
               className="w-full mt-1 bg-bg border border-border rounded-lg px-3 py-2 text-sm text-text">
-              <option value="none">None</option>
-              <option value="iqr">IQR Method</option>
-              <option value="zscore">Z-Score Method</option>
+              <option value="none">{t('none', lang)}</option>
+              <option value="iqr">{t('iqrMethod', lang)}</option>
+              <option value="zscore">{t('zscoreMethod', lang)}</option>
             </select>
             {outlierMethod === 'iqr' && (
               <div className="mt-2 space-y-2">
                 <p className="text-xs text-text-muted leading-relaxed">
-                  IQR (Interquartile Range): Detects outliers based on the range between Q1 and Q3.
-                  Values below Q1 - (threshold × IQR) or above Q3 + (threshold × IQR) are removed.
-                  Default 1.5 is standard; higher values remove only more extreme outliers.
+                  {t('iqrDesc', lang)}
                 </p>
                 <label className="text-xs text-text-muted">
-                  Threshold: {outlierThreshold} (IQR multiplier)
+                  Threshold: {outlierThreshold} ({t('iqrMultiplier', lang)})
                 </label>
                 <input type="range" min={1} max={3}
                   step={0.1} value={outlierThreshold}
@@ -248,12 +249,10 @@ export function Preprocessing() {
             {outlierMethod === 'zscore' && (
               <div className="mt-2 space-y-2">
                 <p className="text-xs text-text-muted leading-relaxed">
-                  Z-Score: Measures how many standard deviations each value is from the mean.
-                  Values with a Z-score exceeding the threshold are identified as outliers and removed.
-                  Typical range is 2–3; lower values remove more data points.
+                  {t('zscoreDesc', lang)}
                 </p>
                 <label className="text-xs text-text-muted">
-                  Threshold: {outlierThreshold} (Z-score limit)
+                  Threshold: {outlierThreshold} ({t('zscoreLimit', lang)})
                 </label>
                 <input type="range" min={1.5} max={4}
                   step={0.1} value={outlierThreshold}
@@ -265,15 +264,15 @@ export function Preprocessing() {
 
           {/* Smoothing Filter */}
           <div>
-            <label className="text-sm font-medium text-text-muted">Smoothing Filter</label>
+            <label className="text-sm font-medium text-text-muted">{t('smoothingFilter', lang)}</label>
             <select value={filterMethod} onChange={(e) => setFilterMethod(e.target.value as FilterMethod)}
               className="w-full mt-1 bg-bg border border-border rounded-lg px-3 py-2 text-sm text-text">
-              <option value="none">None</option>
-              <option value="moving_avg">Moving Average</option>
+              <option value="none">{t('none', lang)}</option>
+              <option value="moving_avg">{t('movingAverage', lang)}</option>
             </select>
             {filterMethod === 'moving_avg' && (
               <div className="mt-2">
-                <label className="text-xs text-text-muted">Window Size: {filterWindow}</label>
+                <label className="text-xs text-text-muted">{t('windowSize', lang)}: {filterWindow}</label>
                 <input type="range" min={3} max={21} step={2} value={filterWindow}
                   onChange={(e) => setFilterWindow(Number(e.target.value))}
                   className="w-full mt-1 accent-accent" />
@@ -283,32 +282,32 @@ export function Preprocessing() {
 
           {/* Scaling */}
           <div>
-            <label className="text-sm font-medium text-text-muted">Scaling</label>
+            <label className="text-sm font-medium text-text-muted">{t('scaling', lang)}</label>
             <select value={scaleMethod} onChange={(e) => setScaleMethod(e.target.value as ScaleMethod)}
               className="w-full mt-1 bg-bg border border-border rounded-lg px-3 py-2 text-sm text-text">
-              <option value="none">None</option>
-              <option value="minmax">Min-Max (0~1)</option>
-              <option value="zscore">Z-Score Standardization</option>
+              <option value="none">{t('none', lang)}</option>
+              <option value="minmax">{t('minmax', lang)}</option>
+              <option value="zscore">{t('zscoreStd', lang)}</option>
             </select>
           </div>
 
           <button onClick={handleProcess}
             className="w-full bg-accent hover:bg-accent-light text-white font-medium py-2 rounded-lg transition-all text-sm">
-            Apply Preprocessing
+            {t('applyPreprocessing', lang)}
           </button>
 
           {processed && (
             <div className="space-y-2">
               <p className="text-xs text-success">
-                Processed: {rawData.length} → {processed.length} rows
+                {t('processed', lang)}: {rawData.length} → {processed.length} {t('rows', lang)}
               </p>
               <button onClick={applyToDataset}
                 className="w-full flex items-center justify-center gap-2 bg-success/20 border border-success/30 text-success hover:bg-success/30 py-2 rounded-lg transition-all text-sm">
-                <RotateCcw size={14} /> Apply to Dataset
+                <RotateCcw size={14} /> {t('applyToDataset', lang)}
               </button>
               <button onClick={downloadExcel}
                 className="w-full flex items-center justify-center gap-2 border border-border text-text-muted hover:text-accent hover:border-accent py-2 rounded-lg transition-all text-sm">
-                <Download size={14} /> Download Excel
+                <Download size={14} /> {t('downloadExcel', lang)}
               </button>
             </div>
           )}
@@ -320,27 +319,27 @@ export function Preprocessing() {
           <div className="flex gap-1 bg-surface border border-border rounded-lg p-1">
             {(['summary', 'preview', 'comparison'] as const).map((tab) => (
               <button key={tab} onClick={() => setActiveTab(tab)}
-                className={`flex-1 py-1.5 text-sm rounded-md transition-all capitalize ${
+                className={`flex-1 py-1.5 text-sm rounded-md transition-all ${
                   activeTab === tab ? 'bg-accent text-white' : 'text-text-muted hover:text-accent'
                 }`}>
-                {tab}
+                {tab === 'summary' ? t('summary', lang) : tab === 'preview' ? t('preview', lang) : t('comparison', lang)}
               </button>
             ))}
           </div>
 
           {activeTab === 'summary' && originalStats && (
             <div className="bg-surface border border-border rounded-xl p-4">
-              <h4 className="text-sm font-medium mb-3">Column Statistics (Original)</h4>
+              <h4 className="text-sm font-medium mb-3">{t('columnStats', lang)}</h4>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="border-b border-border">
-                      <th className="px-3 py-2 text-left text-text-muted">Column</th>
-                      <th className="px-3 py-2 text-right text-text-muted">Missing</th>
-                      <th className="px-3 py-2 text-right text-text-muted">Mean</th>
-                      <th className="px-3 py-2 text-right text-text-muted">Std</th>
-                      <th className="px-3 py-2 text-right text-text-muted">Min</th>
-                      <th className="px-3 py-2 text-right text-text-muted">Max</th>
+                      <th className="px-3 py-2 text-left text-text-muted">{t('column', lang)}</th>
+                      <th className="px-3 py-2 text-right text-text-muted">{t('missing', lang)}</th>
+                      <th className="px-3 py-2 text-right text-text-muted">{t('mean', lang)}</th>
+                      <th className="px-3 py-2 text-right text-text-muted">{t('std', lang)}</th>
+                      <th className="px-3 py-2 text-right text-text-muted">{t('min', lang)}</th>
+                      <th className="px-3 py-2 text-right text-text-muted">{t('max', lang)}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -365,7 +364,7 @@ export function Preprocessing() {
           {activeTab === 'preview' && (
             <div className="bg-surface border border-border rounded-xl p-4">
               <h4 className="text-sm font-medium mb-3">
-                {processed ? 'Processed Data Preview' : 'Original Data Preview'} (first 50 rows)
+                {processed ? t('processedPreview', lang) : t('originalPreview', lang)} ({t('firstRows', lang)})
               </h4>
               <div className="overflow-x-auto max-h-96">
                 <table className="w-full text-xs">
@@ -398,8 +397,8 @@ export function Preprocessing() {
             <BarChart
               labels={Object.keys(originalStats)}
               data={Object.values(originalStats).map((s) => s.missing)}
-              label="Missing Values"
-              title="Missing Values per Column (Original)"
+              label={t('missingValues', lang)}
+              title={t('missingValuesPerColumn', lang)}
               color="rgba(245, 158, 11, 0.7)"
             />
           )}
@@ -407,7 +406,7 @@ export function Preprocessing() {
           {!originalStats && (
             <div className="bg-surface border border-border rounded-xl p-12 text-center text-text-muted">
               <SlidersHorizontal size={40} className="mx-auto mb-3 opacity-30" />
-              <p>Configure preprocessing and click "Apply Preprocessing"</p>
+              <p>{t('configurePrompt', lang)}</p>
             </div>
           )}
         </div>

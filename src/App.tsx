@@ -1,6 +1,7 @@
-import { HashRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { DataProvider } from '@/context/DataContext'
 import { ThemeProvider } from '@/context/ThemeContext'
+import { LangProvider } from '@/context/LangContext'
 import { Layout } from '@/components/layout/Layout'
 import { Home } from '@/pages/Home'
 import { CorrelationAnalysis } from '@/pages/CorrelationAnalysis'
@@ -13,8 +14,9 @@ import { RandomForest } from '@/pages/RandomForest'
 export default function App() {
   return (
     <ThemeProvider>
+    <LangProvider>
     <DataProvider>
-      <HashRouter>
+      <BrowserRouter>
         <Routes>
           <Route element={<Layout />}>
             <Route path="/" element={<Home />} />
@@ -26,8 +28,9 @@ export default function App() {
             <Route path="/forest" element={<RandomForest />} />
           </Route>
         </Routes>
-      </HashRouter>
+      </BrowserRouter>
     </DataProvider>
+    </LangProvider>
     </ThemeProvider>
   )
 }

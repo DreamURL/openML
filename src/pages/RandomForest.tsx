@@ -8,6 +8,8 @@ import { TrainingProgress } from '@/components/ml/TrainingProgress'
 import { BarChart } from '@/components/charts/BarChart'
 import { LineChart } from '@/components/charts/LineChart'
 import { TreePine, Download, Upload } from 'lucide-react'
+import { useLang } from '@/context/LangContext'
+import { t } from '@/i18n/strings'
 
 interface RFResult {
   metrics: {
@@ -75,6 +77,7 @@ function predictForestLocal(model: RFModelData, row: Record<string, unknown>): n
 export function RandomForest() {
   const { rawData, numericalColumns, columns } = useData()
   const navigate = useNavigate()
+  const { lang } = useLang()
   const { saveModel, loadModel } = useModelIO()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -120,9 +123,9 @@ export function RandomForest() {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] text-center">
         <TreePine size={48} className="text-text-muted mb-4" />
-        <h2 className="text-xl font-semibold mb-2">No Dataset Loaded</h2>
-        <p className="text-text-muted mb-4">Upload a dataset first to use Random Forest.</p>
-        <button onClick={() => navigate('/')} className="bg-accent hover:bg-accent-light text-white font-medium px-4 py-2 rounded-lg transition-all">Go to Home</button>
+        <h2 className="text-xl font-semibold mb-2">{t('noDataset', lang)}</h2>
+        <p className="text-text-muted mb-4">{t('noDatasetDesc', lang)}</p>
+        <button onClick={() => navigate('/')} className="bg-accent hover:bg-accent-light text-white font-medium px-4 py-2 rounded-lg transition-all">{t('goToHome', lang)}</button>
       </div>
     )
   }
@@ -131,49 +134,49 @@ export function RandomForest() {
     <div className="max-w-6xl mx-auto space-y-6">
       <h2 className="text-xl font-bold">
         <TreePine size={20} className="inline mr-2 text-accent" />
-        Random Forest
+        {t('forestName', lang)}
       </h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="space-y-4 bg-surface border border-border rounded-xl p-5">
-          <h3 className="font-semibold text-sm">Configuration</h3>
+          <h3 className="font-semibold text-sm">{t('configuration', lang)}</h3>
 
           <div>
-            <label className="text-sm font-medium text-text-muted">Target Column</label>
+            <label className="text-sm font-medium text-text-muted">{t('targetColumn', lang)}</label>
             <select value={targetCol} onChange={(e) => setTargetCol(e.target.value)}
               className="w-full mt-1 bg-bg border border-border rounded-lg px-3 py-2 text-sm text-text">
-              <option value="">Select target...</option>
+              <option value="">{t('selectTarget', lang)}</option>
               {columns.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
 
-          <ColumnSelector columns={numericalColumns.filter((c) => c !== targetCol)} selected={featureCols} onChange={setFeatureCols} label="Feature Columns" />
+          <ColumnSelector columns={numericalColumns.filter((c) => c !== targetCol)} selected={featureCols} onChange={setFeatureCols} label={t('featureColumns', lang)} />
 
           <div>
-            <label className="text-sm font-medium text-text-muted">Target Type</label>
+            <label className="text-sm font-medium text-text-muted">{t('targetType', lang)}</label>
             <select value={targetType} onChange={(e) => setTargetType(e.target.value as 'auto' | 'classification' | 'regression')}
               className="w-full mt-1 bg-bg border border-border rounded-lg px-3 py-2 text-sm text-text">
-              <option value="auto">Auto-detect</option>
-              <option value="classification">Classification</option>
-              <option value="regression">Regression</option>
+              <option value="auto">{t('autoDetect', lang)}</option>
+              <option value="classification">{t('classification', lang)}</option>
+              <option value="regression">{t('regression', lang)}</option>
             </select>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-text-muted">Number of Trees</label>
+              <label className="text-xs text-text-muted">{t('numberOfTrees', lang)}</label>
               <input type="number" value={numTrees} step={10} min={10} max={500}
                 onChange={(e) => setNumTrees(Number(e.target.value))}
                 className="w-full bg-bg border border-border rounded px-2 py-1.5 text-xs text-text" />
             </div>
             <div>
-              <label className="text-xs text-text-muted">Max Depth</label>
+              <label className="text-xs text-text-muted">{t('maxDepth', lang)}</label>
               <input type="number" value={maxDepth} step={1} min={2} max={30}
                 onChange={(e) => setMaxDepth(Number(e.target.value))}
                 className="w-full bg-bg border border-border rounded px-2 py-1.5 text-xs text-text" />
             </div>
             <div className="col-span-2">
-              <label className="text-xs text-text-muted">Test Size: {(testSize * 100).toFixed(0)}%</label>
+              <label className="text-xs text-text-muted">{t('testSize', lang)}: {(testSize * 100).toFixed(0)}%</label>
               <input type="range" value={testSize} step={0.05} min={0.1} max={0.5}
                 onChange={(e) => setTestSize(Number(e.target.value))}
                 className="w-full mt-1 accent-accent" />
@@ -183,10 +186,10 @@ export function RandomForest() {
           <div className="flex gap-2">
             <button onClick={handleTrain} disabled={isRunning || featureCols.length < 1 || !targetCol}
               className="flex-1 bg-accent hover:bg-accent-light disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium py-2 rounded-lg transition-all text-sm">
-              {isRunning ? 'Training...' : 'Train Forest'}
+              {isRunning ? t('training', lang) : t('trainForest', lang)}
             </button>
             {isRunning && (
-              <button onClick={cancel} className="px-3 py-2 border border-danger text-danger rounded-lg text-sm hover:bg-danger/10">Cancel</button>
+              <button onClick={cancel} className="px-3 py-2 border border-danger text-danger rounded-lg text-sm hover:bg-danger/10">{t('cancel', lang)}</button>
             )}
           </div>
 
@@ -196,20 +199,20 @@ export function RandomForest() {
           {result && (
             <button onClick={() => saveModel(result.modelData, 'random_forest_model')}
               className="w-full flex items-center justify-center gap-2 border border-border text-text-muted hover:text-accent hover:border-accent py-2 rounded-lg transition-all text-sm">
-              <Download size={14} /> Save Model
+              <Download size={14} /> {t('saveModel', lang)}
             </button>
           )}
 
           <div className="border-t border-border pt-4">
-            <h3 className="font-semibold text-sm mb-2">Predict with Saved Model</h3>
+            <h3 className="font-semibold text-sm mb-2">{t('predictWithSavedModel', lang)}</h3>
             <input ref={fileInputRef} type="file" accept=".json" className="hidden"
               onChange={(e) => { const f = e.target.files?.[0]; if (f) handleModelUpload(f) }} />
             <button onClick={() => fileInputRef.current?.click()}
               className="w-full flex items-center justify-center gap-2 border border-border text-text-muted hover:text-accent hover:border-accent py-2 rounded-lg transition-all text-sm">
-              <Upload size={14} /> Upload Model & Predict
+              <Upload size={14} /> {t('uploadModelPredict', lang)}
             </button>
             {uploadedModel && (
-              <p className="text-xs text-success mt-2">Model loaded: {uploadedModel.trees.length} trees, {predictions?.length} predictions</p>
+              <p className="text-xs text-success mt-2">{t('modelLoaded', lang)}: {uploadedModel.trees.length} {t('trees', lang)}, {predictions?.length} {t('predictions', lang)}</p>
             )}
           </div>
         </div>
@@ -220,10 +223,10 @@ export function RandomForest() {
               {result.targetType === 'classification' ? (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {[
-                    { label: 'Train Acc.', value: ((result.metrics.trainAccuracy ?? 0) * 100).toFixed(1) + '%' },
-                    { label: 'Test Acc.', value: ((result.metrics.testAccuracy ?? 0) * 100).toFixed(1) + '%' },
-                    { label: 'Trees', value: result.numTrees },
-                    { label: 'Classes', value: result.uniqueClasses?.length ?? 0 },
+                    { label: t('trainAccuracy', lang), value: ((result.metrics.trainAccuracy ?? 0) * 100).toFixed(1) + '%' },
+                    { label: t('testAccuracy', lang), value: ((result.metrics.testAccuracy ?? 0) * 100).toFixed(1) + '%' },
+                    { label: t('trees', lang), value: result.numTrees },
+                    { label: t('classes', lang), value: result.uniqueClasses?.length ?? 0 },
                   ].map(({ label, value }) => (
                     <div key={label} className="bg-surface border border-border rounded-lg p-3">
                       <p className="text-xs text-text-muted">{label}</p>
@@ -234,10 +237,10 @@ export function RandomForest() {
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {[
-                    { label: 'Train RMSE', value: result.metrics.trainRMSE?.toFixed(4) ?? '-' },
-                    { label: 'Test RMSE', value: result.metrics.testRMSE?.toFixed(4) ?? '-' },
-                    { label: 'Trees', value: result.numTrees },
-                    { label: 'Max Depth', value: result.maxDepth },
+                    { label: t('trainRMSE', lang), value: result.metrics.trainRMSE?.toFixed(4) ?? '-' },
+                    { label: t('testRMSE', lang), value: result.metrics.testRMSE?.toFixed(4) ?? '-' },
+                    { label: t('trees', lang), value: result.numTrees },
+                    { label: t('maxDepth', lang), value: result.maxDepth },
                   ].map(({ label, value }) => (
                     <div key={label} className="bg-surface border border-border rounded-lg p-3">
                       <p className="text-xs text-text-muted">{label}</p>
@@ -253,7 +256,7 @@ export function RandomForest() {
                     className={`flex-1 py-1.5 text-sm rounded-md transition-all ${
                       activeTab === tab ? 'bg-accent text-white' : 'text-text-muted hover:text-accent'
                     }`}>
-                    {tab === 'predictions' ? 'Actual vs Pred' : tab === 'importance' ? 'Feature Importance' : 'Summary'}
+                    {tab === 'predictions' ? t('actualVsPred', lang) : tab === 'importance' ? t('featureImportance', lang) : t('summary', lang)}
                   </button>
                 ))}
               </div>
@@ -266,7 +269,7 @@ export function RandomForest() {
                       { label: 'Actual', data: result.trainActual, borderColor: 'rgba(108, 99, 255, 1)', pointRadius: 0 },
                       { label: 'Predicted', data: result.trainPredicted, borderColor: 'rgba(34, 197, 94, 1)', borderDash: [4, 4], pointRadius: 0 },
                     ]}
-                    title={`Training Set (${result.trainSize} samples)`}
+                    title={`${t('trainingSet', lang)} (${result.trainSize} ${t('samples', lang)})`}
                     xLabel="Sample" yLabel="Value"
                   />
                   <LineChart
@@ -275,7 +278,7 @@ export function RandomForest() {
                       { label: 'Actual', data: result.testActual, borderColor: 'rgba(108, 99, 255, 1)', pointRadius: 0 },
                       { label: 'Predicted', data: result.testPredicted, borderColor: 'rgba(239, 68, 68, 1)', borderDash: [4, 4], pointRadius: 0 },
                     ]}
-                    title={`Validation Set (${result.testSize} samples)`}
+                    title={`${t('validationSet', lang)} (${result.testSize} ${t('samples', lang)})`}
                     xLabel="Sample" yLabel="Value"
                   />
                 </div>
@@ -285,20 +288,20 @@ export function RandomForest() {
                 <BarChart
                   labels={result.featureImportance.map((f) => f.feature)}
                   data={result.featureImportance.map((f) => +(f.importance * 100).toFixed(1))}
-                  label="Importance %" title="Feature Importance (Split Frequency)" horizontal
+                  label="Importance %" title={t('featureImportanceTitle', lang)} horizontal
                 />
               )}
 
               {activeTab === 'summary' && (
                 <div className="bg-surface border border-border rounded-xl p-5 space-y-4">
-                  <h4 className="text-sm font-medium">Model Summary</h4>
+                  <h4 className="text-sm font-medium">{t('modelSummary', lang)}</h4>
                   <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div><p className="text-text-muted text-xs">Task Type</p><p className="font-mono capitalize">{result.targetType}</p></div>
-                    <div><p className="text-text-muted text-xs">Number of Trees</p><p className="font-mono">{result.numTrees}</p></div>
-                    <div><p className="text-text-muted text-xs">Max Depth</p><p className="font-mono">{result.maxDepth}</p></div>
-                    <div><p className="text-text-muted text-xs">Train / Test</p><p className="font-mono">{result.trainSize} / {result.testSize}</p></div>
+                    <div><p className="text-text-muted text-xs">{t('taskType', lang)}</p><p className="font-mono capitalize">{result.targetType}</p></div>
+                    <div><p className="text-text-muted text-xs">{t('numberOfTrees', lang)}</p><p className="font-mono">{result.numTrees}</p></div>
+                    <div><p className="text-text-muted text-xs">{t('maxDepth', lang)}</p><p className="font-mono">{result.maxDepth}</p></div>
+                    <div><p className="text-text-muted text-xs">{t('trainTest', lang)}</p><p className="font-mono">{result.trainSize} / {result.testSize}</p></div>
                     {result.uniqueClasses && (
-                      <div className="col-span-2"><p className="text-text-muted text-xs">Classes</p><p className="font-mono">{result.uniqueClasses.join(', ')}</p></div>
+                      <div className="col-span-2"><p className="text-text-muted text-xs">{t('classes', lang)}</p><p className="font-mono">{result.uniqueClasses.join(', ')}</p></div>
                     )}
                   </div>
                 </div>
@@ -308,13 +311,13 @@ export function RandomForest() {
 
           {predictions && !result && (
             <div className="bg-surface border border-border rounded-xl p-4 space-y-3">
-              <h4 className="text-sm font-medium">Model Predictions ({predictions.length} rows) — {uploadedModel?.targetType}</h4>
+              <h4 className="text-sm font-medium">{t('modelPredictions', lang)} ({predictions.length} {t('rows', lang)}) — {uploadedModel?.targetType}</h4>
               <div className="max-h-80 overflow-y-auto">
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="border-b border-border">
-                      <th className="px-3 py-1.5 text-left text-text-muted">Index</th>
-                      <th className="px-3 py-1.5 text-left text-text-muted">Predicted</th>
+                      <th className="px-3 py-1.5 text-left text-text-muted">{t('index', lang)}</th>
+                      <th className="px-3 py-1.5 text-left text-text-muted">{t('predicted', lang)}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -333,7 +336,7 @@ export function RandomForest() {
           {!result && !isRunning && !predictions && (
             <div className="bg-surface border border-border rounded-xl p-12 text-center text-text-muted">
               <TreePine size={40} className="mx-auto mb-3 opacity-30" />
-              <p>Select target and features, then click "Train Forest"</p>
+              <p>{t('configureForestPrompt', lang)}</p>
             </div>
           )}
         </div>

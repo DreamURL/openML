@@ -2,6 +2,8 @@ import { useState, useMemo } from 'react'
 import { useData } from '@/context/DataContext'
 import { useWorker } from '@/hooks/useWorker'
 import { useNavigate } from 'react-router-dom'
+import { useLang } from '@/context/LangContext'
+import { t } from '@/i18n/strings'
 import { ColumnSelector } from '@/components/data/ColumnSelector'
 import { TrainingProgress } from '@/components/ml/TrainingProgress'
 import { ScatterChart, CHART_COLORS } from '@/components/charts/ScatterChart'
@@ -29,6 +31,7 @@ const BASE = import.meta.env.BASE_URL
 export function KMeans() {
   const { rawData, numericalColumns } = useData()
   const navigate = useNavigate()
+  const { lang } = useLang()
 
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([])
   const [k, setK] = useState(3)
@@ -88,13 +91,13 @@ export function KMeans() {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] text-center">
         <GitBranch size={48} className="text-text-muted mb-4" />
-        <h2 className="text-xl font-semibold mb-2">No Dataset Loaded</h2>
-        <p className="text-text-muted mb-4">Upload a dataset first to use K-Means clustering.</p>
+        <h2 className="text-xl font-semibold mb-2">{t('noDataset', lang)}</h2>
+        <p className="text-text-muted mb-4">{t('noDatasetDesc', lang)}</p>
         <button
           onClick={() => navigate('/')}
           className="bg-accent hover:bg-accent-light text-white font-medium px-4 py-2 rounded-lg transition-all"
         >
-          Go to Home
+          {t('goToHome', lang)}
         </button>
       </div>
     )
@@ -104,24 +107,24 @@ export function KMeans() {
     <div className="max-w-6xl mx-auto space-y-6">
       <h2 className="text-xl font-bold">
         <GitBranch size={20} className="inline mr-2 text-accent" />
-        K-Means Clustering
+        {t('kmeansName', lang)}
       </h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Configuration Panel */}
         <div className="space-y-5 bg-surface border border-border rounded-xl p-5">
-          <h3 className="font-semibold text-sm">Configuration</h3>
+          <h3 className="font-semibold text-sm">{t('configuration', lang)}</h3>
 
           <ColumnSelector
             columns={numericalColumns}
             selected={selectedFeatures}
             onChange={setSelectedFeatures}
-            label="Feature Columns"
+            label={t('featureColumns', lang)}
           />
 
           <div>
             <label className="text-sm font-medium text-text-muted">
-              Clusters (k): {k}
+              {t('clusters', lang)} (k): {k}
             </label>
             <input
               type="range"
@@ -139,7 +142,7 @@ export function KMeans() {
 
           <div>
             <label className="text-sm font-medium text-text-muted">
-              Max Iterations: {maxIterations}
+              {t('maxIterations', lang)}: {maxIterations}
             </label>
             <input
               type="range"
@@ -159,7 +162,7 @@ export function KMeans() {
               onChange={(e) => setNormalize(e.target.checked)}
               className="accent-accent"
             />
-            Normalize data
+            {t('normalizeData', lang)}
           </label>
 
           <div className="flex gap-2">
@@ -168,20 +171,20 @@ export function KMeans() {
               disabled={isRunning || selectedFeatures.length < 2}
               className="flex-1 bg-accent hover:bg-accent-light disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium py-2 rounded-lg transition-all text-sm"
             >
-              {isRunning ? 'Training...' : 'Run K-Means'}
+              {isRunning ? t('training', lang) : t('runKMeans', lang)}
             </button>
             {isRunning && (
               <button
                 onClick={cancel}
                 className="px-3 py-2 border border-danger text-danger rounded-lg text-sm hover:bg-danger/10"
               >
-                Cancel
+                {t('cancel', lang)}
               </button>
             )}
           </div>
 
           {selectedFeatures.length < 2 && selectedFeatures.length > 0 && (
-            <p className="text-xs text-warning">Select at least 2 features</p>
+            <p className="text-xs text-warning">{t('selectAtLeast2', lang)}</p>
           )}
 
           <TrainingProgress progress={progress} message={progressMessage} isRunning={isRunning} />
@@ -206,7 +209,7 @@ export function KMeans() {
               }}
               className="w-full flex items-center justify-center gap-2 border border-border text-text-muted hover:text-accent hover:border-accent py-2 rounded-lg transition-all text-sm"
             >
-              <Download size={14} /> Download Clustered Data (Excel)
+              <Download size={14} /> {t('downloadClusteredExcel', lang)}
             </button>
           )}
         </div>
@@ -218,10 +221,10 @@ export function KMeans() {
               {/* Metrics */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
-                  { label: 'Clusters', value: result.clusterStats.length },
-                  { label: 'Iterations', value: result.iterations },
-                  { label: 'Inertia', value: result.inertia.toFixed(4) },
-                  { label: 'Backend', value: result.backend },
+                  { label: t('clusters', lang), value: result.clusterStats.length },
+                  { label: t('iterations', lang), value: result.iterations },
+                  { label: t('inertia', lang), value: result.inertia.toFixed(4) },
+                  { label: t('backend', lang), value: result.backend },
                 ].map(({ label, value }) => (
                   <div key={label} className="bg-surface border border-border rounded-lg p-3">
                     <p className="text-xs text-text-muted">{label}</p>
@@ -238,7 +241,7 @@ export function KMeans() {
                     activeTab === 'chart' ? 'bg-accent text-white' : 'text-text-muted hover:text-accent'
                   }`}
                 >
-                  Chart
+                  {t('chart', lang)}
                 </button>
                 <button
                   onClick={() => setActiveTab('stats')}
@@ -246,7 +249,7 @@ export function KMeans() {
                     activeTab === 'stats' ? 'bg-accent text-white' : 'text-text-muted hover:text-accent'
                   }`}
                 >
-                  Statistics
+                  {t('statistics', lang)}
                 </button>
               </div>
 
@@ -284,14 +287,14 @@ export function KMeans() {
                     datasets={scatterDatasets}
                     xLabel={xAxis || selectedFeatures[0]}
                     yLabel={yAxis || selectedFeatures[1]}
-                    title="Cluster Visualization"
+                    title={t('clusterVisualization', lang)}
                   />
 
                   <BarChart
                     labels={result.clusterStats.map((s) => `Cluster ${s.id + 1}`)}
                     data={result.clusterStats.map((s) => s.count)}
                     label="Points"
-                    title="Cluster Sizes"
+                    title={t('clusterSizes', lang)}
                   />
                 </>
               )}
@@ -302,8 +305,8 @@ export function KMeans() {
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-border">
-                          <th className="px-4 py-2 text-left text-text-muted">Cluster</th>
-                          <th className="px-4 py-2 text-left text-text-muted">Count</th>
+                          <th className="px-4 py-2 text-left text-text-muted">{t('clusters', lang)}</th>
+                          <th className="px-4 py-2 text-left text-text-muted">{t('count', lang)}</th>
                           <th className="px-4 py-2 text-left text-text-muted">%</th>
                           {selectedFeatures.map((f) => (
                             <th key={f} className="px-4 py-2 text-left text-text-muted">
@@ -344,7 +347,7 @@ export function KMeans() {
           {!result && !isRunning && (
             <div className="bg-surface border border-border rounded-xl p-12 text-center text-text-muted">
               <GitBranch size={40} className="mx-auto mb-3 opacity-30" />
-              <p>Configure parameters and click "Run K-Means" to start</p>
+              <p>{t('configureKMeansPrompt', lang)}</p>
             </div>
           )}
         </div>

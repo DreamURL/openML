@@ -3,9 +3,12 @@ import { Upload, FileSpreadsheet } from 'lucide-react'
 import Papa from 'papaparse'
 import * as XLSX from 'xlsx'
 import { useData, type DataRow } from '@/context/DataContext'
+import { useLang } from '@/context/LangContext'
+import { t } from '@/i18n/strings'
 
 export function DataUpload() {
   const { setDataset } = useData()
+  const { lang } = useLang()
   const [isDragging, setIsDragging] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -21,12 +24,12 @@ export function DataUpload() {
         skipEmptyLines: true,
         complete: (results) => {
           if (results.data.length === 0) {
-            setError('No data found in CSV file')
+            setError(t('noDataCSV', lang))
             return
           }
           setDataset(results.data, file.name)
         },
-        error: () => setError('Failed to parse CSV file'),
+        error: () => setError(t('failedCSV', lang)),
       })
     } else if (ext === 'xlsx' || ext === 'xls') {
       const reader = new FileReader()
@@ -36,17 +39,17 @@ export function DataUpload() {
           const ws = wb.Sheets[wb.SheetNames[0]]
           const data = XLSX.utils.sheet_to_json<DataRow>(ws, { defval: '' })
           if (data.length === 0) {
-            setError('No data found in Excel file')
+            setError(t('noDataExcel', lang))
             return
           }
           setDataset(data, file.name)
         } catch {
-          setError('Failed to parse Excel file')
+          setError(t('failedExcel', lang))
         }
       }
       reader.readAsArrayBuffer(file)
     } else {
-      setError('Unsupported file format. Use CSV or Excel (.xlsx, .xls)')
+      setError(t('unsupportedFormat', lang))
     }
   }
 
@@ -93,10 +96,10 @@ export function DataUpload() {
           )}
           <div>
             <p className="text-lg font-medium">
-              {isDragging ? 'Drop your file here' : 'Upload your dataset'}
+              {isDragging ? t('dropFile', lang) : t('uploadDataset', lang)}
             </p>
             <p className="text-sm text-text-muted mt-1">
-              Drag & drop or click to select. Supports CSV, XLSX, XLS
+              {t('dragDropDesc', lang)}
             </p>
           </div>
         </div>

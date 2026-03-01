@@ -4,47 +4,19 @@ import { DataUpload } from '@/components/data/DataUpload'
 import { DataPreview } from '@/components/data/DataPreview'
 import { useNavigate } from 'react-router-dom'
 import { Grid3x3, SlidersHorizontal, GitBranch, Layers, Binary, TreePine, Database } from 'lucide-react'
+import { useLang } from '@/context/LangContext'
+import { t, type StringKey } from '@/i18n/strings'
 import Papa from 'papaparse'
 
 const BASE = import.meta.env.BASE_URL
 
-const algorithms = [
-  {
-    to: '/correlation',
-    icon: Grid3x3,
-    name: 'Correlation Analysis',
-    desc: 'Pearson & Spearman correlation matrix',
-  },
-  {
-    to: '/preprocessing',
-    icon: SlidersHorizontal,
-    name: 'Preprocessing',
-    desc: 'Missing values, normalization, filtering & outlier removal',
-  },
-  {
-    to: '/kmeans',
-    icon: GitBranch,
-    name: 'K-Means Clustering',
-    desc: 'Unsupervised clustering of data points into k groups',
-  },
-  {
-    to: '/pca',
-    icon: Layers,
-    name: 'PCA',
-    desc: 'Dimensionality reduction and anomaly detection',
-  },
-  {
-    to: '/logistic',
-    icon: Binary,
-    name: 'Logistic Regression',
-    desc: 'Binary classification with probability estimation',
-  },
-  {
-    to: '/forest',
-    icon: TreePine,
-    name: 'Random Forest',
-    desc: 'Ensemble method for classification and regression',
-  },
+const algorithms: { to: string; icon: typeof Grid3x3; nameKey: StringKey; descKey: StringKey }[] = [
+  { to: '/correlation', icon: Grid3x3, nameKey: 'correlationName', descKey: 'correlationDesc' },
+  { to: '/preprocessing', icon: SlidersHorizontal, nameKey: 'preprocessingName', descKey: 'preprocessingDesc' },
+  { to: '/kmeans', icon: GitBranch, nameKey: 'kmeansName', descKey: 'kmeansDesc' },
+  { to: '/pca', icon: Layers, nameKey: 'pcaName', descKey: 'pcaDesc' },
+  { to: '/logistic', icon: Binary, nameKey: 'logisticName', descKey: 'logisticDesc' },
+  { to: '/forest', icon: TreePine, nameKey: 'forestName', descKey: 'forestDesc' },
 ]
 
 const sampleDatasets = [
@@ -58,6 +30,7 @@ const sampleDatasets = [
 export function Home() {
   const { rawData, setDataset } = useData()
   const navigate = useNavigate()
+  const { lang } = useLang()
   const [loadingSample, setLoadingSample] = useState(false)
 
   const loadSample = async (file: string, name: string) => {
@@ -86,10 +59,10 @@ export function Home() {
     <div className="max-w-4xl mx-auto space-y-8">
       <div>
         <h2 className="text-2xl font-bold">
-          Welcome to <span className="text-accent">open</span>ML
+          {t('welcomeTo', lang)} <span className="text-accent">open</span>ML
         </h2>
         <p className="text-text-muted mt-1">
-          Upload your dataset and explore machine learning algorithms — all running in your browser.
+          {t('homeDesc', lang)}
         </p>
       </div>
 
@@ -97,8 +70,8 @@ export function Home() {
       <div className="bg-surface border border-border rounded-xl p-4">
         <div className="flex items-center gap-2 mb-3">
           <Database size={16} className="text-accent" />
-          <h3 className="text-sm font-semibold">Sample Dataset</h3>
-          <span className="text-xs text-text-muted">— try without uploading</span>
+          <h3 className="text-sm font-semibold">{t('sampleDataset', lang)}</h3>
+          <span className="text-xs text-text-muted">{t('trySample', lang)}</span>
         </div>
         <div className="flex flex-wrap gap-2">
           {sampleDatasets.map((ds) => (
@@ -122,17 +95,17 @@ export function Home() {
 
       {rawData.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold mb-4">Choose an Algorithm</h3>
+          <h3 className="text-lg font-semibold mb-4">{t('chooseAlgorithm', lang)}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {algorithms.map(({ to, icon: Icon, name, desc }) => (
+            {algorithms.map(({ to, icon: Icon, nameKey, descKey }) => (
               <button
                 key={to}
                 onClick={() => navigate(to)}
                 className="bg-surface border border-border rounded-xl p-4 text-left hover:border-accent/50 hover:bg-surface-hover transition-all group"
               >
                 <Icon size={24} className="text-accent mb-3 group-hover:scale-110 transition-transform" />
-                <h4 className="font-medium text-sm">{name}</h4>
-                <p className="text-xs text-text-muted mt-1">{desc}</p>
+                <h4 className="font-medium text-sm">{t(nameKey, lang)}</h4>
+                <p className="text-xs text-text-muted mt-1">{t(descKey, lang)}</p>
               </button>
             ))}
           </div>

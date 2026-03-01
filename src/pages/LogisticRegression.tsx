@@ -8,6 +8,8 @@ import { TrainingProgress } from '@/components/ml/TrainingProgress'
 import { BarChart } from '@/components/charts/BarChart'
 import { LineChart } from '@/components/charts/LineChart'
 import { Binary, Download, Upload } from 'lucide-react'
+import { useLang } from '@/context/LangContext'
+import { t } from '@/i18n/strings'
 
 interface LogisticResult {
   metrics: { accuracy: number; precision: number; recall: number; f1: number; trainAccuracy: number }
@@ -59,6 +61,7 @@ function predictWithModel(model: LogisticModelData, row: Record<string, unknown>
 export function LogisticRegression() {
   const { rawData, numericalColumns, columns } = useData()
   const navigate = useNavigate()
+  const { lang } = useLang()
   const { saveModel, loadModel } = useModelIO()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -105,9 +108,9 @@ export function LogisticRegression() {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] text-center">
         <Binary size={48} className="text-text-muted mb-4" />
-        <h2 className="text-xl font-semibold mb-2">No Dataset Loaded</h2>
-        <p className="text-text-muted mb-4">Upload a dataset first to use Logistic Regression.</p>
-        <button onClick={() => navigate('/')} className="bg-accent hover:bg-accent-light text-white font-medium px-4 py-2 rounded-lg transition-all">Go to Home</button>
+        <h2 className="text-xl font-semibold mb-2">{t('noDataset', lang)}</h2>
+        <p className="text-text-muted mb-4">{t('noDatasetDesc', lang)}</p>
+        <button onClick={() => navigate('/')} className="bg-accent hover:bg-accent-light text-white font-medium px-4 py-2 rounded-lg transition-all">{t('goToHome', lang)}</button>
       </div>
     )
   }
@@ -118,45 +121,45 @@ export function LogisticRegression() {
     <div className="max-w-6xl mx-auto space-y-6">
       <h2 className="text-xl font-bold">
         <Binary size={20} className="inline mr-2 text-accent" />
-        Logistic Regression
+        {t('logisticName', lang)}
       </h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="space-y-4 bg-surface border border-border rounded-xl p-5">
-          <h3 className="font-semibold text-sm">Configuration</h3>
+          <h3 className="font-semibold text-sm">{t('configuration', lang)}</h3>
 
           <div>
-            <label className="text-sm font-medium text-text-muted">Target Column (binary)</label>
+            <label className="text-sm font-medium text-text-muted">{t('targetColumnBinary', lang)}</label>
             <select value={targetCol} onChange={(e) => setTargetCol(e.target.value)}
               className="w-full mt-1 bg-bg border border-border rounded-lg px-3 py-2 text-sm text-text">
-              <option value="">Select target...</option>
+              <option value="">{t('selectTarget', lang)}</option>
               {columns.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
 
-          <ColumnSelector columns={numericalColumns.filter((c) => c !== targetCol)} selected={featureCols} onChange={setFeatureCols} label="Feature Columns" />
+          <ColumnSelector columns={numericalColumns.filter((c) => c !== targetCol)} selected={featureCols} onChange={setFeatureCols} label={t('featureColumns', lang)} />
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-text-muted">Learning Rate</label>
+              <label className="text-xs text-text-muted">{t('learningRate', lang)}</label>
               <input type="number" value={learningRate} step={0.001} min={0.0001} max={1}
                 onChange={(e) => setLearningRate(Number(e.target.value))}
                 className="w-full bg-bg border border-border rounded px-2 py-1.5 text-xs text-text" />
             </div>
             <div>
-              <label className="text-xs text-text-muted">Epochs</label>
+              <label className="text-xs text-text-muted">{t('epochs', lang)}</label>
               <input type="number" value={epochs} step={10} min={10} max={500}
                 onChange={(e) => setEpochs(Number(e.target.value))}
                 className="w-full bg-bg border border-border rounded px-2 py-1.5 text-xs text-text" />
             </div>
             <div>
-              <label className="text-xs text-text-muted">Test Size</label>
+              <label className="text-xs text-text-muted">{t('testSize', lang)}</label>
               <input type="number" value={testSize} step={0.05} min={0.1} max={0.5}
                 onChange={(e) => setTestSize(Number(e.target.value))}
                 className="w-full bg-bg border border-border rounded px-2 py-1.5 text-xs text-text" />
             </div>
             <div>
-              <label className="text-xs text-text-muted">L2 Regularization</label>
+              <label className="text-xs text-text-muted">{t('l2Regularization', lang)}</label>
               <input type="number" value={l2Strength} step={0.001} min={0} max={1}
                 onChange={(e) => setL2Strength(Number(e.target.value))}
                 className="w-full bg-bg border border-border rounded px-2 py-1.5 text-xs text-text" />
@@ -165,16 +168,16 @@ export function LogisticRegression() {
 
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={normalizeData} onChange={(e) => setNormalizeData(e.target.checked)} className="accent-accent" />
-            Normalize features
+            {t('normalizeFeatures', lang)}
           </label>
 
           <div className="flex gap-2">
             <button onClick={handleTrain} disabled={isRunning || featureCols.length < 1 || !targetCol}
               className="flex-1 bg-accent hover:bg-accent-light disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium py-2 rounded-lg transition-all text-sm">
-              {isRunning ? 'Training...' : 'Train Model'}
+              {isRunning ? t('training', lang) : t('trainModel', lang)}
             </button>
             {isRunning && (
-              <button onClick={cancel} className="px-3 py-2 border border-danger text-danger rounded-lg text-sm hover:bg-danger/10">Cancel</button>
+              <button onClick={cancel} className="px-3 py-2 border border-danger text-danger rounded-lg text-sm hover:bg-danger/10">{t('cancel', lang)}</button>
             )}
           </div>
 
@@ -184,20 +187,20 @@ export function LogisticRegression() {
           {result && (
             <button onClick={() => saveModel(result.modelData, 'logistic_regression_model')}
               className="w-full flex items-center justify-center gap-2 border border-border text-text-muted hover:text-accent hover:border-accent py-2 rounded-lg transition-all text-sm">
-              <Download size={14} /> Save Model
+              <Download size={14} /> {t('saveModel', lang)}
             </button>
           )}
 
           <div className="border-t border-border pt-4">
-            <h3 className="font-semibold text-sm mb-2">Predict with Saved Model</h3>
+            <h3 className="font-semibold text-sm mb-2">{t('predictWithSavedModel', lang)}</h3>
             <input ref={fileInputRef} type="file" accept=".json" className="hidden"
               onChange={(e) => { const f = e.target.files?.[0]; if (f) handleModelUpload(f) }} />
             <button onClick={() => fileInputRef.current?.click()}
               className="w-full flex items-center justify-center gap-2 border border-border text-text-muted hover:text-accent hover:border-accent py-2 rounded-lg transition-all text-sm">
-              <Upload size={14} /> Upload Model & Predict
+              <Upload size={14} /> {t('uploadModelPredict', lang)}
             </button>
             {uploadedModel && (
-              <p className="text-xs text-success mt-2">Model loaded: {uploadedModel.featureColumns.length} features, {predictions?.length} predictions</p>
+              <p className="text-xs text-success mt-2">{t('modelLoaded', lang)} {uploadedModel.featureColumns.length} features, {predictions?.length} predictions</p>
             )}
           </div>
         </div>
@@ -207,11 +210,11 @@ export function LogisticRegression() {
             <>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                 {[
-                  { label: 'Accuracy', value: (result.metrics.accuracy * 100).toFixed(1) + '%' },
-                  { label: 'Precision', value: (result.metrics.precision * 100).toFixed(1) + '%' },
-                  { label: 'Recall', value: (result.metrics.recall * 100).toFixed(1) + '%' },
-                  { label: 'F1 Score', value: (result.metrics.f1 * 100).toFixed(1) + '%' },
-                  { label: 'Train Acc.', value: (result.metrics.trainAccuracy * 100).toFixed(1) + '%' },
+                  { label: t('accuracy', lang), value: (result.metrics.accuracy * 100).toFixed(1) + '%' },
+                  { label: t('precision', lang), value: (result.metrics.precision * 100).toFixed(1) + '%' },
+                  { label: t('recall', lang), value: (result.metrics.recall * 100).toFixed(1) + '%' },
+                  { label: t('f1Score', lang), value: (result.metrics.f1 * 100).toFixed(1) + '%' },
+                  { label: t('trainAcc', lang), value: (result.metrics.trainAccuracy * 100).toFixed(1) + '%' },
                 ].map(({ label, value }) => (
                   <div key={label} className="bg-surface border border-border rounded-lg p-3">
                     <p className="text-xs text-text-muted">{label}</p>
@@ -226,14 +229,14 @@ export function LogisticRegression() {
                     className={`flex-1 py-1.5 text-sm rounded-md transition-all ${
                       activeTab === tab ? 'bg-accent text-white' : 'text-text-muted hover:text-accent'
                     }`}>
-                    {tab === 'predictions' ? 'Actual vs Pred' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                    {tab === 'predictions' ? t('actualVsPred', lang) : tab === 'metrics' ? t('metrics', lang) : tab === 'coefficients' ? t('coefficients', lang) : t('confusion', lang)}
                   </button>
                 ))}
               </div>
 
               {activeTab === 'metrics' && (
                 <BarChart labels={result.lossHistory.map((_, i) => `${i + 1}`)} data={result.lossHistory}
-                  label="Loss" title="Training Loss" color="rgba(239, 68, 68, 0.7)" />
+                  label="Loss" title={t('trainingLoss', lang)} color="rgba(239, 68, 68, 0.7)" />
               )}
 
               {activeTab === 'predictions' && (
@@ -244,7 +247,7 @@ export function LogisticRegression() {
                       { label: 'Actual', data: result.trainActual, borderColor: 'rgba(108, 99, 255, 1)', pointRadius: 0 },
                       { label: 'Predicted', data: result.trainPredicted, borderColor: 'rgba(34, 197, 94, 1)', borderDash: [4, 4], pointRadius: 0 },
                     ]}
-                    title={`Training Set (${result.trainSize} samples)`}
+                    title={`${t('trainingSet', lang)} (${result.trainSize} ${t('samples', lang)})`}
                     xLabel="Sample" yLabel="Class"
                   />
                   <LineChart
@@ -253,7 +256,7 @@ export function LogisticRegression() {
                       { label: 'Actual', data: result.testActual, borderColor: 'rgba(108, 99, 255, 1)', pointRadius: 0 },
                       { label: 'Predicted', data: result.testPredicted, borderColor: 'rgba(239, 68, 68, 1)', borderDash: [4, 4], pointRadius: 0 },
                     ]}
-                    title={`Validation Set (${result.testSize} samples)`}
+                    title={`${t('validationSet', lang)} (${result.testSize} ${t('samples', lang)})`}
                     xLabel="Sample" yLabel="Class"
                   />
                 </div>
@@ -261,18 +264,18 @@ export function LogisticRegression() {
 
               {activeTab === 'coefficients' && (
                 <BarChart labels={result.coefficients.map((c) => c.feature)} data={result.coefficients.map((c) => c.coefficient)}
-                  label="Coefficient" title="Feature Coefficients" horizontal />
+                  label="Coefficient" title={t('featureCoefficients', lang)} horizontal />
               )}
 
               {activeTab === 'confusion' && (
                 <div className="bg-surface border border-border rounded-xl p-5">
-                  <h4 className="text-sm font-medium mb-4">Confusion Matrix</h4>
+                  <h4 className="text-sm font-medium mb-4">{t('confusionMatrix', lang)}</h4>
                   <div className="grid grid-cols-2 gap-2 max-w-xs mx-auto">
                     {[
-                      { label: 'True Positive', value: result.confusionMatrix.tp, color: 'success' },
-                      { label: 'False Positive', value: result.confusionMatrix.fp, color: 'danger' },
-                      { label: 'False Negative', value: result.confusionMatrix.fn, color: 'danger' },
-                      { label: 'True Negative', value: result.confusionMatrix.tn, color: 'success' },
+                      { label: t('truePositive', lang), value: result.confusionMatrix.tp, color: 'success' },
+                      { label: t('falsePositive', lang), value: result.confusionMatrix.fp, color: 'danger' },
+                      { label: t('falseNegative', lang), value: result.confusionMatrix.fn, color: 'danger' },
+                      { label: t('trueNegative', lang), value: result.confusionMatrix.tn, color: 'success' },
                     ].map(({ label, value, color }) => (
                       <div key={label} className={`bg-${color}/20 border border-${color}/30 rounded-lg p-4 text-center`}>
                         <p className="text-xs text-text-muted">{label}</p>
@@ -281,7 +284,7 @@ export function LogisticRegression() {
                     ))}
                   </div>
                   <p className="text-xs text-text-muted text-center mt-3">
-                    Classes: {result.classLabels.join(' vs ')} · Test set: {result.testSize} samples
+                    {t('classes', lang)}: {result.classLabels.join(' vs ')} · {t('testSet', lang)}: {result.testSize} samples
                   </p>
                 </div>
               )}
@@ -290,14 +293,14 @@ export function LogisticRegression() {
 
           {predictions && !result && (
             <div className="bg-surface border border-border rounded-xl p-4 space-y-3">
-              <h4 className="text-sm font-medium">Model Predictions ({predictions.length} rows)</h4>
+              <h4 className="text-sm font-medium">{t('modelPredictions', lang)} ({predictions.length} rows)</h4>
               <div className="max-h-80 overflow-y-auto">
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="border-b border-border">
-                      <th className="px-3 py-1.5 text-left text-text-muted">Index</th>
-                      <th className="px-3 py-1.5 text-left text-text-muted">Probability</th>
-                      <th className="px-3 py-1.5 text-left text-text-muted">Predicted</th>
+                      <th className="px-3 py-1.5 text-left text-text-muted">{t('index', lang)}</th>
+                      <th className="px-3 py-1.5 text-left text-text-muted">{t('probability', lang)}</th>
+                      <th className="px-3 py-1.5 text-left text-text-muted">{t('predicted', lang)}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -317,7 +320,7 @@ export function LogisticRegression() {
           {!result && !isRunning && !predictions && (
             <div className="bg-surface border border-border rounded-xl p-12 text-center text-text-muted">
               <Binary size={40} className="mx-auto mb-3 opacity-30" />
-              <p>Select target and features, then click "Train Model"</p>
+              <p>{t('configureTrainPrompt', lang)}</p>
             </div>
           )}
         </div>
