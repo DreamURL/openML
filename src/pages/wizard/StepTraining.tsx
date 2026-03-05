@@ -491,7 +491,6 @@ function predictWithModel(modelData: Record<string, any>, rows: Record<string, a
     const layerWeights: { kernel: number[][]; bias: number[]; activation: string }[] = []
     const savedWeights: any[] = modelData.weights
     // Each layer has [kernel, bias]; architecture from layers config + output layer
-    const hiddenLayers: number[] = modelData.layers || [64, 32]
     const numClasses = modelData.numClasses || (modelData.classMap ? Object.keys(modelData.classMap).length : 0)
     const isClassif = modelData.isClassification
 
@@ -555,7 +554,7 @@ function predictWithModel(modelData: Record<string, any>, rows: Record<string, a
   return { predicted, actual, featureCols, targetCol, modelType }
 }
 
-function ExistingModelPrediction({ data, modelData, lang }: { data: Record<string, any>[]; modelData: Record<string, any>; lang: 'en' | 'ko' }) {
+function ExistingModelPrediction({ data, modelData, lang }: { data: Record<string, any>[]; modelData: Record<string, any>; lang: Lang }) {
   const [result, setResult] = useState<{ predicted: number[]; actual: (number | null)[]; featureCols: string[]; targetCol: string; modelType: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -757,7 +756,7 @@ function renderHyperparams(
   model: ModelType,
   params: Record<string, unknown>,
   update: (key: string, value: unknown) => void,
-  lang: 'en' | 'ko'
+  lang: Lang
 ) {
   const numInput = (key: string, label: string, min: number, max: number, step: number) => (
     <div key={key}>
