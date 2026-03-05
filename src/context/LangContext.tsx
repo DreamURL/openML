@@ -11,7 +11,14 @@ const LangContext = createContext<LangContextType>({ lang: 'en', setLang: () => 
 export function LangProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(() => {
     const saved = localStorage.getItem('openml-lang')
-    return (saved === 'en' || saved === 'ko') ? saved : 'en'
+    if (saved && ['en', 'ko', 'zh', 'ja', 'es'].includes(saved)) return saved as Lang
+    // Auto-detect from browser language
+    const browserLang = (navigator.language || navigator.languages?.[0] || 'en').toLowerCase()
+    if (browserLang.startsWith('ko')) return 'ko'
+    if (browserLang.startsWith('zh')) return 'zh'
+    if (browserLang.startsWith('ja')) return 'ja'
+    if (browserLang.startsWith('es')) return 'es'
+    return 'en'
   })
 
   const setLang = (l: Lang) => {

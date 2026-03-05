@@ -1,4 +1,4 @@
-import { Cpu, Sun, Moon } from 'lucide-react'
+import { Cpu, Sun, Moon, FileText } from 'lucide-react'
 import { useState, useEffect, type ReactNode } from 'react'
 import { useTheme } from '@/context/ThemeContext'
 import { useLang } from '@/context/LangContext'
@@ -6,9 +6,10 @@ import { t } from '@/i18n/strings'
 
 interface HeaderProps {
   menuButton?: ReactNode
+  onPrivacyClick?: () => void
 }
 
-export function Header({ menuButton }: HeaderProps) {
+export function Header({ menuButton, onPrivacyClick }: HeaderProps) {
   const [backend, setBackend] = useState<string>('detecting...')
   const { theme, toggleTheme } = useTheme()
   const { lang, setLang } = useLang()
@@ -37,19 +38,29 @@ export function Header({ menuButton }: HeaderProps) {
         <span className="lg:hidden text-sm font-bold"><span className="text-accent">open</span>ML</span>
       </div>
       <div className="flex items-center gap-3">
+        <button
+          onClick={onPrivacyClick}
+          className="p-1.5 rounded-lg hover:bg-surface-hover text-text-muted hover:text-text transition-colors"
+          title={t('privacyPolicy', lang)}
+        >
+          <FileText size={18} />
+        </button>
         <div className="flex items-center rounded-lg border border-border overflow-hidden text-xs">
-          <button
-            onClick={() => setLang('en')}
-            className={`px-2 py-1 transition-colors ${lang === 'en' ? 'bg-accent text-white' : 'text-text-muted hover:text-text hover:bg-surface-hover'}`}
-          >
-            EN
-          </button>
-          <button
-            onClick={() => setLang('ko')}
-            className={`px-2 py-1 transition-colors ${lang === 'ko' ? 'bg-accent text-white' : 'text-text-muted hover:text-text hover:bg-surface-hover'}`}
-          >
-            한국어
-          </button>
+          {([
+            ['en', 'EN'],
+            ['ko', '한국어'],
+            ['zh', '中文'],
+            ['ja', '日本語'],
+            ['es', 'ES'],
+          ] as const).map(([code, label]) => (
+            <button
+              key={code}
+              onClick={() => setLang(code)}
+              className={`px-2 py-1 transition-colors ${lang === code ? 'bg-accent text-white' : 'text-text-muted hover:text-text hover:bg-surface-hover'}`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
         <button
           onClick={toggleTheme}

@@ -107,7 +107,7 @@ function predictForest(trees, X, type) {
   })
 }
 
-async function trainRandomForest({ data, targetColumn, featureColumns, testSize, numTrees, maxDepth, targetType }) {
+async function trainRandomForest({ data, targetColumn, featureColumns, testSize, nTrees, maxDepth, targetType, sharedSeed }) {
   progress(5, 'Preparing data...')
 
   // Extract X, y
@@ -125,10 +125,15 @@ async function trainRandomForest({ data, targetColumn, featureColumns, testSize,
   const uniqueY = new Set(y)
   const actualType = targetType === 'auto' ? (uniqueY.size <= 10 ? 'classification' : 'regression') : targetType
 
-  // Shuffle and split
+  // Shuffle and split (use seeded shuffle for reproducibility across models)
+  function seededRandom(seed) {
+    let s = seed | 0
+    return function() { s = Math.imul(s ^ (s >>> 16), 0x45d9f3b); s = Math.imul(s ^ (s >>> 13), 0x45d9f3b); return ((s ^= s >>> 16) >>> 0) / 4294967296 }
+  }
+  const rng = sharedSeed != null ? seededRandom(sharedSeed) : Math.random
   const indices = X.map((_, i) => i)
   for (let i = indices.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
+    const j = Math.floor(rng() * (i + 1))
     ;[indices[i], indices[j]] = [indices[j], indices[i]]
   }
   const splitIdx = Math.floor(X.length * (1 - testSize))
@@ -136,7 +141,7 @@ async function trainRandomForest({ data, targetColumn, featureColumns, testSize,
   const trainX = trainIdx.map((i) => X[i]), trainY = trainIdx.map((i) => y[i])
   const testX = testIdx.map((i) => X[i]), testY = testIdx.map((i) => y[i])
 
-  progress(10, `Training ${numTrees} trees...`)
+  progress(10, `Training ${nTrees} trees...`)
 
   // Train forest with bagging
   const trees = []
@@ -144,10 +149,10 @@ async function trainRandomForest({ data, targetColumn, featureColumns, testSize,
   const sqrtFeatures = Math.max(1, Math.floor(Math.sqrt(numFeatures)))
   const featureImportanceAcc = new Array(numFeatures).fill(0)
 
-  for (let t = 0; t < numTrees; t++) {
-    const pct = 10 + Math.floor((t / numTrees) * 70)
-    if (t % Math.max(1, Math.floor(numTrees / 20)) === 0) {
-      progress(pct, `Building tree ${t + 1}/${numTrees}`)
+  for (let t = 0; t < nTrees; t++) {
+    const pct = 10 + Math.floor((t / nTrees) * 70)
+    if (t % Math.max(1, Math.floor(nTrees / 20)) === 0) {
+      progress(pct, `Building tree ${t + 1}/${nTrees}`)
     }
 
     // Bootstrap sample
@@ -186,44 +191,70 @@ async function trainRandomForest({ data, targetColumn, featureColumns, testSize,
     let trainCorr = 0, testCorr = 0
     for (let i = 0; i < trainY.length; i++) if (trainPreds[i] === trainY[i]) trainCorr++
     for (let i = 0; i < testY.length; i++) if (testPreds[i] === testY[i]) testCorr++
+
+    // Compute precision, recall, f1 per class then macro-average
+    const classes = [...uniqueY]
+    let precisionSum = 0, recallSum = 0, f1Sum = 0
+    for (const cls of classes) {
+      let tp = 0, fp = 0, fn = 0
+      for (let i = 0; i < testY.length; i++) {
+        if (testPreds[i] === cls && testY[i] === cls) tp++
+        else if (testPreds[i] === cls && testY[i] !== cls) fp++
+        else if (testPreds[i] !== cls && testY[i] === cls) fn++
+      }
+      const p = tp + fp > 0 ? tp / (tp + fp) : 0
+      const r = tp + fn > 0 ? tp / (tp + fn) : 0
+      precisionSum += p
+      recallSum += r
+      f1Sum += p + r > 0 ? (2 * p * r) / (p + r) : 0
+    }
+    const nClasses = classes.length || 1
     metrics = {
+      accuracy: +(testCorr / testY.length).toFixed(4),
+      precision: +(precisionSum / nClasses).toFixed(4),
+      recall: +(recallSum / nClasses).toFixed(4),
+      f1: +(f1Sum / nClasses).toFixed(4),
       trainAccuracy: +(trainCorr / trainY.length).toFixed(4),
-      testAccuracy: +(testCorr / testY.length).toFixed(4),
-      type: 'classification',
     }
   } else {
     const testMSE = testY.reduce((s, v, i) => s + (v - testPreds[i]) ** 2, 0) / testY.length
     const trainMSE = trainY.reduce((s, v, i) => s + (v - trainPreds[i]) ** 2, 0) / trainY.length
+    const yMean = testY.reduce((a, b) => a + b, 0) / testY.length
+    const ssTot = testY.reduce((s, v) => s + (v - yMean) ** 2, 0)
+    const ssRes = testY.reduce((s, v, i) => s + (v - testPreds[i]) ** 2, 0)
     metrics = {
-      trainRMSE: +Math.sqrt(trainMSE).toFixed(4),
-      testRMSE: +Math.sqrt(testMSE).toFixed(4),
-      type: 'regression',
+      r2: +(1 - ssRes / (ssTot || 1e-10)).toFixed(4),
+      rmse: +Math.sqrt(testMSE).toFixed(4),
+      mae: +(testY.reduce((s, v, i) => s + Math.abs(v - testPreds[i]), 0) / testY.length).toFixed(4),
+      trainRmse: +Math.sqrt(trainMSE).toFixed(4),
     }
   }
 
-  // Feature importance (normalized)
+  // Feature importance as Record<string, number> (normalized)
   const totalSplits = featureImportanceAcc.reduce((a, b) => a + b, 0) || 1
-  const featureImportance = featureColumns.map((name, i) => ({
+  const fiArr = featureColumns.map((name, i) => ({
     feature: name,
     importance: +(featureImportanceAcc[i] / totalSplits).toFixed(4),
   }))
-  featureImportance.sort((a, b) => b.importance - a.importance)
+  fiArr.sort((a, b) => b.importance - a.importance)
+  const featureImportance = {}
+  fiArr.forEach(f => { featureImportance[f.feature] = f.importance })
 
   progress(100, 'Complete')
 
   return {
     metrics,
-    featureImportance,
-    trainSize: trainX.length,
-    testSize: testX.length,
-    numTrees: trees.length,
-    maxDepth,
-    targetType: actualType,
-    uniqueClasses: actualType === 'classification' ? [...uniqueY] : null,
+    predictions: {
+      trainActual: trainY,
+      trainPredicted: trainPreds,
+      testActual: testY,
+      testPredicted: testPreds,
+    },
+    extra: {
+      featureImportance,
+      nTrees: trees.length,
+      maxDepth,
+    },
     modelData: { trees, featureColumns, targetColumn, targetType: actualType },
-    trainActual: trainY,
-    trainPredicted: trainPreds,
-    testActual: testY,
-    testPredicted: testPreds,
   }
 }

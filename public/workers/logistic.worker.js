@@ -18,7 +18,7 @@ function progress(percent, message) {
   self.postMessage({ type: 'PROGRESS', percent, message })
 }
 
-async function trainLogistic({ data, targetColumn, featureColumns, testSize, learningRate, epochs, l2Strength, normalize }) {
+async function trainLogistic({ data, targetColumn, featureColumns, testSize, learningRate, epochs, l2Strength, normalize, sharedSeed }) {
   progress(10, 'Preprocessing data...')
 
   // Extract unique target values (binary classification)
@@ -63,12 +63,16 @@ async function trainLogistic({ data, targetColumn, featureColumns, testSize, lea
     }
   }
 
-  // Split train/test
+  // Split train/test (use seeded shuffle for reproducibility across models)
+  function seededRandom(seed) {
+    let s = seed | 0
+    return function() { s = Math.imul(s ^ (s >>> 16), 0x45d9f3b); s = Math.imul(s ^ (s >>> 13), 0x45d9f3b); return ((s ^= s >>> 16) >>> 0) / 4294967296 }
+  }
+  const rng = sharedSeed != null ? seededRandom(sharedSeed) : Math.random
   const splitIdx = Math.floor(allX.length * (1 - testSize))
   const indices = allX.map((_, i) => i)
-  // Shuffle
   for (let i = indices.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
+    const j = Math.floor(rng() * (i + 1))
     ;[indices[i], indices[j]] = [indices[j], indices[i]]
   }
 
@@ -152,16 +156,18 @@ async function trainLogistic({ data, targetColumn, featureColumns, testSize, lea
   }
   const trainAccuracy = trainCorrect / yTrainArr.length
 
-  // Extract coefficients
+  // Extract coefficients as Record<string, number>
   const weights = model.getWeights()
   const kernel = await weights[0].array() // [numFeatures, 1]
   const bias = await weights[1].array() // [1]
-  const coefficients = featureColumns.map((name, i) => ({
+  const coeffArr = featureColumns.map((name, i) => ({
     feature: name,
     coefficient: +kernel[i][0].toFixed(6),
     absCoeff: +Math.abs(kernel[i][0]).toFixed(6),
   }))
-  coefficients.sort((a, b) => b.absCoeff - a.absCoeff)
+  coeffArr.sort((a, b) => b.absCoeff - a.absCoeff)
+  const coefficients = {}
+  coeffArr.forEach(c => { coefficients[c.feature] = c.coefficient })
 
   // Model data for save/load
   const modelData = {
@@ -198,18 +204,13 @@ async function trainLogistic({ data, targetColumn, featureColumns, testSize, lea
       f1: +f1.toFixed(4),
       trainAccuracy: +trainAccuracy.toFixed(4),
     },
-    confusionMatrix: { tp, fp, fn, tn },
-    coefficients,
     lossHistory,
-    accHistory,
-    classLabels: targetValues,
-    trainSize: xTrainArr.length,
-    testSize: xTestArr.length,
+    predictions: { trainActual, trainPredicted, testActual, testPredicted },
+    extra: {
+      coefficients,
+      confusionMatrix: [[tn, fp], [fn, tp]],
+      accHistory,
+    },
     modelData,
-    backend: tf.getBackend(),
-    trainActual,
-    trainPredicted,
-    testActual,
-    testPredicted,
   }
 }

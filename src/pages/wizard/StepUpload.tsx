@@ -1,23 +1,15 @@
 import { useState } from 'react'
 import { useData, type DataRow } from '@/context/DataContext'
+import { useWizard } from '@/context/WizardContext'
 import { DataUpload } from '@/components/data/DataUpload'
 import { DataPreview } from '@/components/data/DataPreview'
-import { useNavigate } from 'react-router-dom'
-import { Grid3x3, SlidersHorizontal, GitBranch, Layers, Binary, TreePine, Database } from 'lucide-react'
 import { useLang } from '@/context/LangContext'
-import { t, type StringKey } from '@/i18n/strings'
+import { t } from '@/i18n/strings'
+import { Database, Sparkles, FolderOpen } from 'lucide-react'
+import { Head } from '@/components/seo/Head'
 import Papa from 'papaparse'
 
 const BASE = import.meta.env.BASE_URL
-
-const algorithms: { to: string; icon: typeof Grid3x3; nameKey: StringKey; descKey: StringKey }[] = [
-  { to: '/correlation', icon: Grid3x3, nameKey: 'correlationName', descKey: 'correlationDesc' },
-  { to: '/preprocessing', icon: SlidersHorizontal, nameKey: 'preprocessingName', descKey: 'preprocessingDesc' },
-  { to: '/kmeans', icon: GitBranch, nameKey: 'kmeansName', descKey: 'kmeansDesc' },
-  { to: '/pca', icon: Layers, nameKey: 'pcaName', descKey: 'pcaDesc' },
-  { to: '/logistic', icon: Binary, nameKey: 'logisticName', descKey: 'logisticDesc' },
-  { to: '/forest', icon: TreePine, nameKey: 'forestName', descKey: 'forestDesc' },
-]
 
 const sampleDatasets = [
   {
@@ -27,9 +19,9 @@ const sampleDatasets = [
   },
 ]
 
-export function Home() {
+export function StepUpload() {
   const { rawData, setDataset } = useData()
-  const navigate = useNavigate()
+  const { hasExistingModel, setHasExistingModel } = useWizard()
   const { lang } = useLang()
   const [loadingSample, setLoadingSample] = useState(false)
 
@@ -56,14 +48,46 @@ export function Home() {
   }
 
   return (
+    <>
+    <Head titleKey="seoAppTitle" descriptionKey="seoAppDescription" />
     <div className="max-w-4xl mx-auto space-y-8">
       <div>
         <h2 className="text-2xl font-bold">
           {t('welcomeTo', lang)} <span className="text-accent">open</span>ML
         </h2>
-        <p className="text-text-muted mt-1">
-          {t('homeDesc', lang)}
-        </p>
+        <p className="text-text-muted mt-1">{t('homeDesc', lang)}</p>
+      </div>
+
+      {/* Mode selection */}
+      <div className="bg-surface border border-border rounded-xl p-5">
+        <h3 className="text-sm font-semibold mb-3">{t('selectMode', lang)}</h3>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setHasExistingModel(false)}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all text-sm font-medium ${
+              !hasExistingModel
+                ? 'border-accent bg-accent/10 text-accent'
+                : 'border-border text-text-muted hover:border-accent/50'
+            }`}
+          >
+            <Sparkles size={18} />
+            {t('newTraining', lang)}
+          </button>
+          <button
+            onClick={() => setHasExistingModel(true)}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all text-sm font-medium ${
+              hasExistingModel
+                ? 'border-accent bg-accent/10 text-accent'
+                : 'border-border text-text-muted hover:border-accent/50'
+            }`}
+          >
+            <FolderOpen size={18} />
+            {t('existingModel', lang)}
+          </button>
+        </div>
+        {hasExistingModel && (
+          <p className="text-xs text-text-muted mt-2">{t('existingModelDesc', lang)}</p>
+        )}
       </div>
 
       {/* Sample Dataset */}
@@ -94,23 +118,13 @@ export function Home() {
       <DataPreview />
 
       {rawData.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold mb-4">{t('chooseAlgorithm', lang)}</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {algorithms.map(({ to, icon: Icon, nameKey, descKey }) => (
-              <button
-                key={to}
-                onClick={() => navigate(to)}
-                className="bg-surface border border-border rounded-xl p-4 text-left hover:border-accent/50 hover:bg-surface-hover transition-all group"
-              >
-                <Icon size={24} className="text-accent mb-3 group-hover:scale-110 transition-transform" />
-                <h4 className="font-medium text-sm">{t(nameKey, lang)}</h4>
-                <p className="text-xs text-text-muted mt-1">{t(descKey, lang)}</p>
-              </button>
-            ))}
-          </div>
+        <div className="bg-accent/10 border border-accent/30 rounded-xl p-4 text-center">
+          <p className="text-sm text-accent font-medium">
+            {t('dataReady', lang)}
+          </p>
         </div>
       )}
     </div>
+    </>
   )
 }

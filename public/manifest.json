@@ -1,0 +1,19 @@
+{
+  "name": "openML - Machine Learning in Your Browser",
+  "short_name": "openML",
+  "description": "Train machine learning models directly in your browser — no server needed.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f1129",
+  "theme_color": "#6C63FF",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "categories": ["education", "productivity", "utilities"],
+  "lang": "en",
+  "dir": "ltr"
+}
