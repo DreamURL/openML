@@ -412,7 +412,16 @@ function predictWithModel(modelData: Record<string, any>, rows: Record<string, a
   if (validRows.length === 0) throw new Error('No valid rows for prediction')
 
   let X = validRows.map(r => featureCols.map(f => Number(r[f])))
-  const actual = validRows.map(r => targetCol && r[targetCol] != null && !isNaN(Number(r[targetCol])) ? Number(r[targetCol]) : null)
+  const actual = validRows.map(r => {
+    if (!targetCol || r[targetCol] == null) return null
+    const raw = r[targetCol]
+    // For classification models with classMap, convert original label to class index
+    if (modelData.classMap) {
+      const idx = modelData.classMap[String(raw)]
+      return idx !== undefined ? idx : null
+    }
+    return !isNaN(Number(raw)) ? Number(raw) : null
+  })
 
   // Normalize if model has normalization params
   if (modelData.normalize && modelData.means && modelData.stds) {
@@ -611,7 +620,7 @@ function ExistingModelPrediction({ data, modelData, lang }: { data: Record<strin
               </div>
               {result.actual.some(a => a !== null) && (
                 <>
-                  {result.modelType === 'regression' || result.modelType === 'xgboost' && !modelData.isClassification || result.modelType === 'random_forest' && modelData.targetType === 'regression' ? (() => {
+                  {result.modelType === 'regression' || result.modelType === 'multiple_regression' || (result.modelType === 'xgboost' && !modelData.isClassification) || (result.modelType === 'random_forest' && modelData.targetType === 'regression') || (result.modelType === 'ann' && !modelData.isClassification) ? (() => {
                     const pairs = result.predicted.map((p, i) => ({ p, a: result.actual[i] })).filter(x => x.a !== null)
                     const rmse = Math.sqrt(pairs.reduce((s, { p, a }) => s + (p - a!) ** 2, 0) / pairs.length)
                     const mean = pairs.reduce((s, { a }) => s + a!, 0) / pairs.length

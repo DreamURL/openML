@@ -13,9 +13,15 @@ import { Grid3x3, RefreshCw, X as XIcon, Download, ImageDown } from 'lucide-reac
 
 export function CorrelationPanel() {
   const { rawData, numericalColumns } = useData()
-  const { excludedColumns, setExcludedColumns } = useWizard()
+  const { excludedColumns, setExcludedColumns, hasExistingModel, uploadedModelData } = useWizard()
   const { lang } = useLang()
   const { theme } = useTheme()
+
+  const modelData = uploadedModelData as Record<string, any> | null
+  const isLocked = hasExistingModel && modelData != null
+  const lockedFeatures: string[] = isLocked ? (modelData.featureColumns || []) : []
+  const lockedTarget: string = isLocked ? (modelData.targetColumn || '') : ''
+  const isColumnLocked = (col: string) => isLocked && (lockedFeatures.includes(col) || col === lockedTarget)
 
   const [method, setMethod] = useState<CorrelationMethod>('pearson')
   const [minCorrelation, setMinCorrelation] = useState(0.5)
@@ -50,12 +56,14 @@ export function CorrelationPanel() {
   }, [result, minCorrelation])
 
   const excludeColumn = (col: string) => {
+    if (isColumnLocked(col)) return
     if (!excludedColumns.includes(col)) {
       setExcludedColumns([...excludedColumns, col])
     }
   }
 
   const restoreColumn = (col: string) => {
+    if (isColumnLocked(col)) return
     setExcludedColumns(excludedColumns.filter((c) => c !== col))
   }
 
@@ -217,7 +225,7 @@ export function CorrelationPanel() {
           {excludedColumns.map((col) => (
             <span key={col} className="flex items-center gap-1 px-2 py-0.5 bg-warning/20 text-warning rounded text-xs">
               {col}
-              <button onClick={() => restoreColumn(col)}><XIcon size={10} /></button>
+              {!isColumnLocked(col) && <button onClick={() => restoreColumn(col)}><XIcon size={10} /></button>}
             </span>
           ))}
           <button onClick={calculate}
@@ -295,12 +303,12 @@ export function CorrelationPanel() {
                   </div>
                   <div className="flex gap-1">
                     <button onClick={() => excludeColumn(item.f1)}
-                      disabled={excludedColumns.includes(item.f1)}
+                      disabled={excludedColumns.includes(item.f1) || isColumnLocked(item.f1)}
                       className="flex-1 text-[10px] px-2 py-1 border border-border text-text-muted hover:text-danger hover:border-danger rounded disabled:opacity-30 transition-all">
                       {t('exclude', lang)} {item.f1}
                     </button>
                     <button onClick={() => excludeColumn(item.f2)}
-                      disabled={excludedColumns.includes(item.f2)}
+                      disabled={excludedColumns.includes(item.f2) || isColumnLocked(item.f2)}
                       className="flex-1 text-[10px] px-2 py-1 border border-border text-text-muted hover:text-danger hover:border-danger rounded disabled:opacity-30 transition-all">
                       {t('exclude', lang)} {item.f2}
                     </button>

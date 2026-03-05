@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useState, useRef, useMemo, useEffect } from 'react'
 import { useData, type DataRow } from '@/context/DataContext'
 import { useWizard } from '@/context/WizardContext'
 import { DataUpload } from '@/components/data/DataUpload'
 import { DataPreview } from '@/components/data/DataPreview'
 import { useLang } from '@/context/LangContext'
 import { t } from '@/i18n/strings'
-import { Database, Sparkles, FolderOpen } from 'lucide-react'
+import { Database, Sparkles, FolderOpen, Upload, CheckCircle, AlertTriangle } from 'lucide-react'
 import { Head } from '@/components/seo/Head'
 import Papa from 'papaparse'
 
@@ -20,10 +20,52 @@ const sampleDatasets = [
 ]
 
 export function StepUpload() {
-  const { rawData, setDataset } = useData()
-  const { hasExistingModel, setHasExistingModel } = useWizard()
+  const { rawData, columns, setDataset } = useData()
+  const {
+    hasExistingModel, setHasExistingModel,
+    uploadedModelData, setUploadedModelFile, setUploadedModelData,
+    setTargetColumn, setSelectedColumns, setExcludedColumns,
+  } = useWizard()
   const { lang } = useLang()
   const [loadingSample, setLoadingSample] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const modelData = uploadedModelData as Record<string, any> | null
+
+  // Validate model columns against data columns
+  const validation = useMemo(() => {
+    if (!modelData || rawData.length === 0 || columns.length === 0) return null
+
+    const modelTarget: string = modelData.targetColumn || ''
+    const modelFeatures: string[] = modelData.featureColumns || []
+
+    const targetExists = columns.includes(modelTarget)
+    const missingFeatures = modelFeatures.filter(f => !columns.includes(f))
+    const allValid = targetExists && missingFeatures.length === 0
+
+    return { modelTarget, modelFeatures, targetExists, missingFeatures, allValid }
+  }, [modelData, rawData, columns])
+
+  // Auto-set target and columns when validation passes
+  useEffect(() => {
+    if (!validation || !validation.allValid) return
+
+    setTargetColumn(validation.modelTarget)
+    setSelectedColumns([validation.modelTarget, ...validation.modelFeatures])
+    setExcludedColumns(columns.filter(c => c !== validation.modelTarget && !validation.modelFeatures.includes(c)))
+  }, [validation, columns, setTargetColumn, setSelectedColumns, setExcludedColumns])
+
+  const handleModelUpload = async (file: File) => {
+    try {
+      const text = await file.text()
+      const data = JSON.parse(text)
+      setUploadedModelFile(file)
+      setUploadedModelData(data)
+    } catch {
+      setUploadedModelData(null)
+      setUploadedModelFile(null)
+    }
+  }
 
   const loadSample = async (file: string, name: string) => {
     setLoadingSample(true)
@@ -89,6 +131,70 @@ export function StepUpload() {
           <p className="text-xs text-text-muted mt-2">{t('existingModelDesc', lang)}</p>
         )}
       </div>
+
+      {/* Model upload (existing model mode) */}
+      {hasExistingModel && (
+        <div className="bg-surface border border-accent/30 rounded-xl p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-semibold">{t('uploadExistingModel', lang)}</h3>
+              <p className="text-xs text-text-muted mt-1">{t('uploadModelDesc', lang)}</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <input ref={fileInputRef} type="file" accept=".json" className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleModelUpload(f) }} />
+              <button onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent-light text-white rounded-lg text-sm font-medium transition-all">
+                <Upload size={14} /> {t('uploadModel', lang)}
+              </button>
+            </div>
+          </div>
+
+          {modelData && (
+            <div className="bg-success/10 border border-success/30 rounded-lg p-2 text-xs text-success">
+              {t('modelLoaded', lang)}
+              {modelData.type && <span className="ml-2 opacity-70">({modelData.type})</span>}
+            </div>
+          )}
+
+          {/* Model info */}
+          {modelData && (
+            <div className="bg-bg border border-border rounded-lg p-3 text-xs space-y-1">
+              <div><span className="text-text-muted">{t('modelTargetColumn', lang)}: </span><span className="font-mono font-medium">{modelData.targetColumn || '-'}</span></div>
+              <div><span className="text-text-muted">{t('modelFeatureColumns', lang)}: </span><span className="font-mono font-medium">{(modelData.featureColumns || []).join(', ') || '-'}</span></div>
+            </div>
+          )}
+
+          {/* Validation results */}
+          {validation && (
+            validation.allValid ? (
+              <div className="flex items-center gap-2 bg-success/10 border border-success/30 rounded-lg p-2 text-xs text-success">
+                <CheckCircle size={14} />
+                {t('modelColumnsValid', lang)}
+              </div>
+            ) : (
+              <div className="bg-danger/10 border border-danger/30 rounded-lg p-2 text-xs text-danger space-y-1">
+                {!validation.targetExists && (
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle size={14} />
+                    {t('modelTargetMissing', lang)}: <span className="font-mono font-medium">{validation.modelTarget}</span>
+                  </div>
+                )}
+                {validation.missingFeatures.length > 0 && (
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+                    <span>{t('modelColumnsMissing', lang)}: <span className="font-mono font-medium">{validation.missingFeatures.join(', ')}</span></span>
+                  </div>
+                )}
+              </div>
+            )
+          )}
+
+          {!modelData && (
+            <p className="text-xs text-warning">{t('uploadModelFirstUpload', lang)}</p>
+          )}
+        </div>
+      )}
 
       {/* Sample Dataset */}
       <div className="bg-surface border border-border rounded-xl p-4">
