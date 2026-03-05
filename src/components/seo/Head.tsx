@@ -75,12 +75,14 @@ export function Head({ titleKey, descriptionKey }: HeadProps) {
     setMeta('og:type', 'website', 'property')
     setMeta('og:url', url, 'property')
     setMeta('og:site_name', 'openML', 'property')
+    setMeta('og:image', `${BASE_URL}/openGraphic_openML.jpg`, 'property')
     setMeta('og:locale', LOCALE_MAP[lang] || 'en_US', 'property')
 
     // Twitter Card
-    setMeta('twitter:card', 'summary', 'name')
+    setMeta('twitter:card', 'summary_large_image', 'name')
     setMeta('twitter:title', title, 'name')
     setMeta('twitter:description', description, 'name')
+    setMeta('twitter:image', `${BASE_URL}/openGraphic_openML.jpg`, 'name')
 
     // hreflang alternate links
     for (const l of LANG_LIST) {
