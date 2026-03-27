@@ -16,6 +16,7 @@ import {
   ChevronDown, ChevronUp, Play, Square, AlertCircle, Settings,
 } from 'lucide-react'
 import { Head } from '@/components/seo/Head'
+import { AdUnit } from '@/components/ad/AdUnit'
 
 interface ModelOption {
   type: ModelType
@@ -395,6 +396,9 @@ export function StepTraining() {
           )}
         </div>
       )}
+
+      {/* Ad unit at bottom of results */}
+      <AdUnit slot="8504504766" className="mt-6" />
     </div>
     </>
   )

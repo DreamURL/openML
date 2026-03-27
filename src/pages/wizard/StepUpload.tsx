@@ -7,6 +7,7 @@ import { useLang } from '@/context/LangContext'
 import { t } from '@/i18n/strings'
 import { Database, Sparkles, FolderOpen, Upload, CheckCircle, AlertTriangle } from 'lucide-react'
 import { Head } from '@/components/seo/Head'
+import { AdUnit } from '@/components/ad/AdUnit'
 import Papa from 'papaparse'
 
 const BASE = import.meta.env.BASE_URL
@@ -219,6 +220,8 @@ export function StepUpload() {
           ))}
         </div>
       </div>
+
+      <AdUnit slot="9648263725" format="fluid" layout="in-article" className="my-6" />
 
       <DataUpload />
       <DataPreview />

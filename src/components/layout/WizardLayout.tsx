@@ -7,6 +7,7 @@ import { useData } from '@/context/DataContext'
 import { useLang } from '@/context/LangContext'
 import { t } from '@/i18n/strings'
 import { ArrowLeft, ArrowRight, X } from 'lucide-react'
+import { AdUnit } from '@/components/ad/AdUnit'
 
 const stepRoutes = ['/', '/processing', '/training'] as const
 
@@ -87,6 +88,13 @@ export function WizardLayout() {
       <main className="flex-1 p-4 md:p-6 overflow-auto">
         <Outlet />
       </main>
+
+      {/* Ad unit above bottom navigation */}
+      <div className="border-t border-border px-4 md:px-6 py-2">
+        <div className="max-w-4xl mx-auto">
+          <AdUnit slot="8504504766" />
+        </div>
+      </div>
 
       {/* Bottom navigation */}
       <div className="border-t border-border bg-surface px-6 py-3 flex items-center justify-between">
