@@ -1,7 +1,7 @@
 {
   "name": "openML - Machine Learning in Your Browser",
   "short_name": "openML",
-  "description": "Train machine learning models directly in your browser — no server needed.",
+  "description": "Train machine learning models directly in your browser without sending datasets to a server.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f1129",

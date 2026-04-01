@@ -4,7 +4,7 @@ import { useWizard, type ModelType } from '@/context/WizardContext'
 import { useMultiWorker, type ModelTrainingConfig } from '@/hooks/useMultiWorker'
 import { useLang } from '@/context/LangContext'
 import { t, type StringKey, type Lang } from '@/i18n/strings'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { ModelComparisonChart } from '@/components/wizard/results/ModelComparisonChart'
 import { RegressionDetail } from '@/components/wizard/results/RegressionDetail'
 import { LogisticDetail } from '@/components/wizard/results/LogisticDetail'
@@ -133,6 +133,7 @@ export function StepTraining() {
   const { selectedModels, setSelectedModels, processedData, excludedColumns, targetColumn, hasExistingModel, uploadedModelData, setTrainingResult } = useWizard()
   const { lang } = useLang()
   const navigate = useNavigate()
+  const location = useLocation()
   const { runAll, states, cancelAll, isAnyRunning } = useMultiWorker()
 
   const [hyperparams, setHyperparams] = useState<Record<ModelType, Record<string, unknown>>>(defaultHyperparams)
@@ -196,40 +197,51 @@ export function StepTraining() {
 
   if (rawData.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-[60vh] text-center">
-        <AlertCircle size={48} className="text-text-muted mb-4" />
-        <h2 className="text-xl font-semibold mb-2">{t('noDataset', lang)}</h2>
-        <p className="text-text-muted mb-4">{t('noDatasetDesc', lang)}</p>
-        <button onClick={() => navigate('/')} className="bg-accent hover:bg-accent-light text-white font-medium px-4 py-2 rounded-lg transition-all">
-          {t('goToHome', lang)}
-        </button>
-      </div>
+      <>
+        <Head titleKey="seoTrainingTitle" descriptionKey="seoTrainingDescription" noIndex />
+        <div className="flex flex-col items-center justify-center h-[60vh] text-center">
+          <AlertCircle size={48} className="text-text-muted mb-4" />
+          <h2 className="text-xl font-semibold mb-2">{t('noDataset', lang)}</h2>
+          <p className="text-text-muted mb-4">{t('noDatasetDesc', lang)}</p>
+          <button onClick={() => navigate({ pathname: '/', search: location.search })} className="bg-accent hover:bg-accent-light text-white font-medium px-4 py-2 rounded-lg transition-all">
+            {t('goToHome', lang)}
+          </button>
+        </div>
+      </>
     )
   }
 
   // Flow B: Existing model — no model uploaded yet
   if (hasExistingModel && !uploadedModelData) {
     return (
-      <div className="max-w-6xl mx-auto space-y-6">
-        <h2 className="text-xl font-bold flex items-center gap-2">
-          <Brain size={20} className="text-accent" />
-          {t('predictionResults', lang)}
-        </h2>
-        <div className="bg-warning/10 border border-warning/30 rounded-lg p-3 text-sm text-warning">
-          {t('uploadModelFirst', lang)}
+      <>
+        <Head titleKey="seoTrainingTitle" descriptionKey="seoTrainingDescription" noIndex />
+        <div className="max-w-6xl mx-auto space-y-6">
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <Brain size={20} className="text-accent" />
+            {t('predictionResults', lang)}
+          </h2>
+          <div className="bg-warning/10 border border-warning/30 rounded-lg p-3 text-sm text-warning">
+            {t('uploadModelFirst', lang)}
+          </div>
         </div>
-      </div>
+      </>
     )
   }
 
   // Flow B: Existing model prediction with uploaded model
   if (hasExistingModel && uploadedModelData) {
-    return <ExistingModelPrediction data={data} modelData={uploadedModelData as Record<string, any>} lang={lang} />
+    return (
+      <>
+        <Head titleKey="seoTrainingTitle" descriptionKey="seoTrainingDescription" noIndex />
+        <ExistingModelPrediction data={data} modelData={uploadedModelData as Record<string, any>} lang={lang} />
+      </>
+    )
   }
 
   return (
     <>
-    <Head titleKey="seoTrainingTitle" descriptionKey="seoTrainingDescription" />
+    <Head titleKey="seoTrainingTitle" descriptionKey="seoTrainingDescription" noIndex />
     <div className="max-w-6xl mx-auto space-y-6">
       <h2 className="text-xl font-bold flex items-center gap-2">
         <Brain size={20} className="text-accent" />

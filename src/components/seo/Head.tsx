@@ -2,8 +2,7 @@ import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useLang } from '@/context/LangContext'
 import { t, type StringKey } from '@/i18n/strings'
-
-const BASE_URL = 'https://openml.dreamurl.biz'
+import { BASE_URL, LANGS, buildLocalizedUrl, sanitizeSeoText } from '@/utils/seo'
 
 const LOCALE_MAP: Record<string, string> = {
   en: 'en_US',
@@ -13,11 +12,10 @@ const LOCALE_MAP: Record<string, string> = {
   es: 'es_ES',
 }
 
-const LANG_LIST = ['en', 'ko', 'zh', 'ja', 'es'] as const
-
 interface HeadProps {
   titleKey: StringKey
   descriptionKey: StringKey
+  noIndex?: boolean
 }
 
 function setMeta(name: string, content: string, attr: 'name' | 'property' = 'name') {
@@ -44,53 +42,55 @@ function setLink(rel: string, href: string, attrs?: Record<string, string>) {
   el.setAttribute('href', href)
 }
 
-export function Head({ titleKey, descriptionKey }: HeadProps) {
+export function Head({ titleKey, descriptionKey, noIndex = false }: HeadProps) {
   const { lang } = useLang()
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
 
   useEffect(() => {
-    const title = t(titleKey, lang)
-    const description = t(descriptionKey, lang)
+    const title = sanitizeSeoText(t(titleKey, lang))
+    const description = sanitizeSeoText(t(descriptionKey, lang))
     const keywords = t('seoKeywords', lang)
-    const url = `${BASE_URL}${pathname}`
+    const url = buildLocalizedUrl(pathname, search, lang)
+    const shouldIndex = !noIndex && pathname === '/'
+    const robots = shouldIndex
+      ? 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'
+      : 'noindex, follow'
 
-    // Title
     document.title = title
-
-    // HTML lang
     document.documentElement.lang = lang
     document.documentElement.setAttribute('dir', 'ltr')
 
-    // Basic meta
     setMeta('description', description)
     setMeta('keywords', keywords)
     setMeta('author', 'openML')
+    setMeta('robots', robots)
+    setMeta('googlebot', robots)
 
-    // Canonical
     setLink('canonical', url)
 
-    // Open Graph
     setMeta('og:title', title, 'property')
     setMeta('og:description', description, 'property')
     setMeta('og:type', 'website', 'property')
     setMeta('og:url', url, 'property')
     setMeta('og:site_name', 'openML', 'property')
     setMeta('og:image', `${BASE_URL}/openGraphic_openML.jpg`, 'property')
+    setMeta('og:image:alt', 'openML browser machine learning preview', 'property')
     setMeta('og:locale', LOCALE_MAP[lang] || 'en_US', 'property')
 
-    // Twitter Card
-    setMeta('twitter:card', 'summary_large_image', 'name')
-    setMeta('twitter:title', title, 'name')
-    setMeta('twitter:description', description, 'name')
-    setMeta('twitter:image', `${BASE_URL}/openGraphic_openML.jpg`, 'name')
+    setMeta('twitter:card', 'summary_large_image')
+    setMeta('twitter:title', title)
+    setMeta('twitter:description', description)
+    setMeta('twitter:image', `${BASE_URL}/openGraphic_openML.jpg`)
+    setMeta('twitter:image:alt', 'openML browser machine learning preview')
 
-    // hreflang alternate links
-    for (const l of LANG_LIST) {
-      setLink('alternate', `${BASE_URL}${pathname}`, { hreflang: l })
+    document.querySelectorAll('link[rel="alternate"][hreflang]').forEach((link) => link.remove())
+    if (shouldIndex) {
+      for (const locale of LANGS) {
+        setLink('alternate', buildLocalizedUrl(pathname, search, locale), { hreflang: locale })
+      }
+      setLink('alternate', `${BASE_URL}/`, { hreflang: 'x-default' })
     }
-    setLink('alternate', `${BASE_URL}${pathname}`, { hreflang: 'x-default' })
 
-    // JSON-LD Schema
     const schemaId = 'openml-jsonld'
     let script = document.getElementById(schemaId) as HTMLScriptElement | null
     if (!script) {
@@ -99,32 +99,55 @@ export function Head({ titleKey, descriptionKey }: HeadProps) {
       script.type = 'application/ld+json'
       document.head.appendChild(script)
     }
-    script.textContent = JSON.stringify({
-      '@context': 'https://schema.org',
-      '@type': 'WebApplication',
-      name: 'openML',
-      url: BASE_URL,
-      applicationCategory: 'EducationalApplication',
-      operatingSystem: 'Any',
-      browserRequirements: 'Requires JavaScript and WebGL',
-      offers: {
-        '@type': 'Offer',
-        price: '0',
-        priceCurrency: 'USD',
-      },
-      description: t('seoAppDescription', lang),
-      inLanguage: LANG_LIST.map(l => LOCALE_MAP[l]),
-      featureList: [
-        'Multiple Regression',
-        'Logistic Regression',
-        'Random Forest',
-        'Neural Network (ANN)',
-        'XGBoost',
-        'K-Means Clustering',
-        'PCA',
-      ],
-    })
-  }, [lang, pathname, titleKey, descriptionKey])
+
+    script.textContent = JSON.stringify(
+      shouldIndex
+        ? [
+            {
+              '@context': 'https://schema.org',
+              '@type': 'WebSite',
+              name: 'openML',
+              url,
+              description,
+              inLanguage: lang,
+            },
+            {
+              '@context': 'https://schema.org',
+              '@type': 'SoftwareApplication',
+              name: 'openML',
+              url,
+              applicationCategory: 'EducationalApplication',
+              operatingSystem: 'Any',
+              isAccessibleForFree: true,
+              browserRequirements: 'Requires JavaScript and WebGL',
+              offers: {
+                '@type': 'Offer',
+                price: '0',
+                priceCurrency: 'USD',
+              },
+              description,
+              availableLanguage: LANGS.map((item) => LOCALE_MAP[item]),
+              featureList: [
+                'Multiple Regression',
+                'Logistic Regression',
+                'Random Forest',
+                'Neural Network (ANN)',
+                'XGBoost',
+                'K-Means Clustering',
+                'PCA',
+              ],
+            },
+          ]
+        : {
+            '@context': 'https://schema.org',
+            '@type': 'WebPage',
+            name: title,
+            url,
+            description,
+            inLanguage: lang,
+          },
+    )
+  }, [descriptionKey, lang, noIndex, pathname, search, titleKey])
 
   return null
 }

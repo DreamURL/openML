@@ -1,18 +1,29 @@
 import { Cpu, Sun, Moon, FileText } from 'lucide-react'
 import { useState, useEffect, type ReactNode } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { useTheme } from '@/context/ThemeContext'
 import { useLang } from '@/context/LangContext'
 import { t } from '@/i18n/strings'
+import { buildLocalizedPath } from '@/utils/seo'
 
 interface HeaderProps {
   menuButton?: ReactNode
   onPrivacyClick?: () => void
 }
 
+const LANG_OPTIONS = [
+  ['en', 'EN'],
+  ['ko', 'KO'],
+  ['zh', 'ZH'],
+  ['ja', 'JA'],
+  ['es', 'ES'],
+] as const
+
 export function Header({ menuButton, onPrivacyClick }: HeaderProps) {
   const [backend, setBackend] = useState<string>('detecting...')
   const { theme, toggleTheme } = useTheme()
   const { lang, setLang } = useLang()
+  const { pathname, search } = useLocation()
 
   useEffect(() => {
     async function detectBackend() {
@@ -46,20 +57,15 @@ export function Header({ menuButton, onPrivacyClick }: HeaderProps) {
           <FileText size={18} />
         </button>
         <div className="flex items-center rounded-lg border border-border overflow-hidden text-xs">
-          {([
-            ['en', 'EN'],
-            ['ko', '한국어'],
-            ['zh', '中文'],
-            ['ja', '日本語'],
-            ['es', 'ES'],
-          ] as const).map(([code, label]) => (
-            <button
+          {LANG_OPTIONS.map(([code, label]) => (
+            <Link
               key={code}
+              to={buildLocalizedPath(pathname, search, code)}
               onClick={() => setLang(code)}
               className={`px-2 py-1 transition-colors ${lang === code ? 'bg-accent text-white' : 'text-text-muted hover:text-text hover:bg-surface-hover'}`}
             >
               {label}
-            </button>
+            </Link>
           ))}
         </div>
         <button

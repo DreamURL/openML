@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, type ReactNode } from 'react'
 import type { Lang } from '@/i18n/strings'
+import { isLang } from '@/utils/seo'
 
 interface LangContextType {
   lang: Lang
@@ -10,9 +11,12 @@ const LangContext = createContext<LangContextType>({ lang: 'en', setLang: () => 
 
 export function LangProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(() => {
+    const queryLang = new URLSearchParams(window.location.search).get('lang')
+    if (isLang(queryLang)) return queryLang
+
     const saved = localStorage.getItem('openml-lang')
-    if (saved && ['en', 'ko', 'zh', 'ja', 'es'].includes(saved)) return saved as Lang
-    // Auto-detect from browser language
+    if (isLang(saved)) return saved
+
     const browserLang = (navigator.language || navigator.languages?.[0] || 'en').toLowerCase()
     if (browserLang.startsWith('ko')) return 'ko'
     if (browserLang.startsWith('zh')) return 'zh'
@@ -21,9 +25,9 @@ export function LangProvider({ children }: { children: ReactNode }) {
     return 'en'
   })
 
-  const setLang = (l: Lang) => {
-    setLangState(l)
-    localStorage.setItem('openml-lang', l)
+  const setLang = (nextLang: Lang) => {
+    setLangState(nextLang)
+    localStorage.setItem('openml-lang', nextLang)
   }
 
   return (

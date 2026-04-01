@@ -8,49 +8,80 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>openML - Machine Learning in Your Browser</title>
-    <meta name="description" content="Train machine learning models directly in your browser. Upload data, preprocess, and run regression, classification, clustering, and neural networks — all locally, no server needed." />
+    <meta name="description" content="Train machine learning models directly in your browser. Upload data, preprocess features, and run regression, classification, clustering, and neural networks locally without a server." />
     <meta name="keywords" content="machine learning, browser, TensorFlow.js, regression, classification, neural network, XGBoost, random forest, data analysis" />
     <meta name="author" content="openML" />
     <meta name="theme-color" content="#6C63FF" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
 
-    <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="openML - Machine Learning in Your Browser" />
-    <meta property="og:description" content="Train machine learning models directly in your browser. Upload data, preprocess, and run regression, classification, clustering, and neural networks — all locally, no server needed." />
+    <meta property="og:description" content="Train machine learning models directly in your browser. Upload data, preprocess features, and run regression, classification, clustering, and neural networks locally without a server." />
     <meta property="og:url" content="https://openml.dreamurl.biz/" />
     <meta property="og:site_name" content="openML" />
     <meta property="og:image" content="https://openml.dreamurl.biz/openGraphic_openML.jpg" />
+    <meta property="og:image:alt" content="openML browser machine learning preview" />
     <meta property="og:locale" content="en_US" />
     <meta property="og:locale:alternate" content="ko_KR" />
     <meta property="og:locale:alternate" content="zh_CN" />
     <meta property="og:locale:alternate" content="ja_JP" />
     <meta property="og:locale:alternate" content="es_ES" />
 
-    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="https://openml.dreamurl.biz/openGraphic_openML.jpg" />
+    <meta name="twitter:image:alt" content="openML browser machine learning preview" />
     <meta name="twitter:title" content="openML - Machine Learning in Your Browser" />
-    <meta name="twitter:description" content="Train machine learning models directly in your browser — no server needed." />
+    <meta name="twitter:description" content="Train machine learning models directly in your browser without sending datasets to a backend." />
 
-    <!-- Canonical & alternate languages -->
     <link rel="canonical" href="https://openml.dreamurl.biz/" />
     <link rel="alternate" hreflang="en" href="https://openml.dreamurl.biz/" />
-    <link rel="alternate" hreflang="ko" href="https://openml.dreamurl.biz/" />
-    <link rel="alternate" hreflang="zh" href="https://openml.dreamurl.biz/" />
-    <link rel="alternate" hreflang="ja" href="https://openml.dreamurl.biz/" />
-    <link rel="alternate" hreflang="es" href="https://openml.dreamurl.biz/" />
+    <link rel="alternate" hreflang="ko" href="https://openml.dreamurl.biz/?lang=ko" />
+    <link rel="alternate" hreflang="zh" href="https://openml.dreamurl.biz/?lang=zh" />
+    <link rel="alternate" hreflang="ja" href="https://openml.dreamurl.biz/?lang=ja" />
+    <link rel="alternate" hreflang="es" href="https://openml.dreamurl.biz/?lang=es" />
     <link rel="alternate" hreflang="x-default" href="https://openml.dreamurl.biz/" />
 
-    <!-- Google AdSense -->
     <meta name="google-adsense-account" content="ca-pub-2030441326964978" />
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2030441326964978"
-      crossorigin="anonymous"></script>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2030441326964978" crossorigin="anonymous"></script>
 
     <link rel="manifest" href="/manifest.json" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-    <!-- GitHub Pages SPA redirect restore -->
+    <script type="application/ld+json">
+      [
+        {
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          "name": "openML",
+          "url": "https://openml.dreamurl.biz/",
+          "description": "Train machine learning models directly in your browser. Upload data, preprocess features, and run regression, classification, clustering, and neural networks locally without a server.",
+          "inLanguage": "en"
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          "name": "openML",
+          "url": "https://openml.dreamurl.biz/",
+          "applicationCategory": "EducationalApplication",
+          "operatingSystem": "Any",
+          "isAccessibleForFree": true,
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          },
+          "description": "Browser-based machine learning for CSV and Excel datasets, including preprocessing, regression, classification, clustering, neural networks, XGBoost, and PCA.",
+          "featureList": [
+            "CSV and Excel dataset upload",
+            "Data preprocessing and correlation analysis",
+            "Regression and classification models",
+            "K-Means clustering and PCA",
+            "Local-first browser execution"
+          ]
+        }
+      ]
+    </script>
     <script type="text/javascript">
       (function(l) {
         if (l.search[1] === '/' ) {
@@ -66,6 +97,13 @@
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <main style="max-width: 960px; margin: 0 auto; padding: 32px 20px; font-family: Inter, Arial, sans-serif;">
+        <h1>openML</h1>
+        <p>openML is a browser-based machine learning tool for uploading datasets, preprocessing features, and training models locally on your device.</p>
+        <p>Supported workflows include regression, classification, clustering, PCA, and neural network experiments with CSV or Excel files.</p>
+      </main>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
